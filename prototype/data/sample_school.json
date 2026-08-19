@@ -1,0 +1,1633 @@
+{
+  "grid": {
+    "days": 5,
+    "periods": 7,
+    "morning": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "double_breaks": [
+      4
+    ]
+  },
+  "subjects": [
+    {
+      "id": "CH",
+      "name": "國語",
+      "room_type": null,
+      "is_core": true
+    },
+    {
+      "id": "MA",
+      "name": "數學",
+      "room_type": null,
+      "is_core": true
+    },
+    {
+      "id": "LI",
+      "name": "生活",
+      "room_type": null,
+      "is_core": false
+    },
+    {
+      "id": "SO",
+      "name": "社會",
+      "room_type": null,
+      "is_core": false
+    },
+    {
+      "id": "IN",
+      "name": "綜合",
+      "room_type": null,
+      "is_core": false
+    },
+    {
+      "id": "HE",
+      "name": "健康",
+      "room_type": null,
+      "is_core": false
+    },
+    {
+      "id": "FX",
+      "name": "彈性",
+      "room_type": null,
+      "is_core": false
+    },
+    {
+      "id": "SC",
+      "name": "自然",
+      "room_type": "science",
+      "is_core": false
+    },
+    {
+      "id": "EN",
+      "name": "英語",
+      "room_type": null,
+      "is_core": false
+    },
+    {
+      "id": "PE",
+      "name": "體育",
+      "room_type": "pe",
+      "is_core": false
+    },
+    {
+      "id": "MU",
+      "name": "音樂",
+      "room_type": "music",
+      "is_core": false
+    },
+    {
+      "id": "AR",
+      "name": "美勞",
+      "room_type": "art",
+      "is_core": false
+    },
+    {
+      "id": "CO",
+      "name": "電腦",
+      "room_type": "computer",
+      "is_core": false
+    }
+  ],
+  "rooms": [
+    {
+      "id": "SCI1",
+      "name": "自然教室",
+      "type": "science"
+    },
+    {
+      "id": "PE1",
+      "name": "活動中心",
+      "type": "pe"
+    },
+    {
+      "id": "MUS1",
+      "name": "音樂教室",
+      "type": "music"
+    },
+    {
+      "id": "ART1",
+      "name": "美勞教室",
+      "type": "art"
+    },
+    {
+      "id": "COM1",
+      "name": "電腦教室",
+      "type": "computer"
+    },
+    {
+      "id": "R101",
+      "name": "101 教室",
+      "type": "homeroom"
+    },
+    {
+      "id": "R102",
+      "name": "102 教室",
+      "type": "homeroom"
+    },
+    {
+      "id": "R201",
+      "name": "201 教室",
+      "type": "homeroom"
+    },
+    {
+      "id": "R202",
+      "name": "202 教室",
+      "type": "homeroom"
+    },
+    {
+      "id": "R301",
+      "name": "301 教室",
+      "type": "homeroom"
+    },
+    {
+      "id": "R302",
+      "name": "302 教室",
+      "type": "homeroom"
+    },
+    {
+      "id": "R401",
+      "name": "401 教室",
+      "type": "homeroom"
+    },
+    {
+      "id": "R402",
+      "name": "402 教室",
+      "type": "homeroom"
+    },
+    {
+      "id": "R501",
+      "name": "501 教室",
+      "type": "homeroom"
+    },
+    {
+      "id": "R502",
+      "name": "502 教室",
+      "type": "homeroom"
+    },
+    {
+      "id": "R601",
+      "name": "601 教室",
+      "type": "homeroom"
+    },
+    {
+      "id": "R602",
+      "name": "602 教室",
+      "type": "homeroom"
+    }
+  ],
+  "classes": [
+    {
+      "id": "101",
+      "name": "1 年 1 班",
+      "grade": 1,
+      "homeroom": "R101",
+      "blocked": [
+        [
+          1,
+          7
+        ],
+        [
+          2,
+          7
+        ],
+        [
+          3,
+          7
+        ],
+        [
+          4,
+          7
+        ],
+        [
+          5,
+          7
+        ],
+        [
+          3,
+          5
+        ],
+        [
+          3,
+          6
+        ]
+      ]
+    },
+    {
+      "id": "102",
+      "name": "1 年 2 班",
+      "grade": 1,
+      "homeroom": "R102",
+      "blocked": [
+        [
+          1,
+          7
+        ],
+        [
+          2,
+          7
+        ],
+        [
+          3,
+          7
+        ],
+        [
+          4,
+          7
+        ],
+        [
+          5,
+          7
+        ],
+        [
+          3,
+          5
+        ],
+        [
+          3,
+          6
+        ]
+      ]
+    },
+    {
+      "id": "201",
+      "name": "2 年 1 班",
+      "grade": 2,
+      "homeroom": "R201",
+      "blocked": [
+        [
+          1,
+          7
+        ],
+        [
+          2,
+          7
+        ],
+        [
+          3,
+          7
+        ],
+        [
+          4,
+          7
+        ],
+        [
+          5,
+          7
+        ],
+        [
+          3,
+          5
+        ],
+        [
+          3,
+          6
+        ]
+      ]
+    },
+    {
+      "id": "202",
+      "name": "2 年 2 班",
+      "grade": 2,
+      "homeroom": "R202",
+      "blocked": [
+        [
+          1,
+          7
+        ],
+        [
+          2,
+          7
+        ],
+        [
+          3,
+          7
+        ],
+        [
+          4,
+          7
+        ],
+        [
+          5,
+          7
+        ],
+        [
+          3,
+          5
+        ],
+        [
+          3,
+          6
+        ]
+      ]
+    },
+    {
+      "id": "301",
+      "name": "3 年 1 班",
+      "grade": 3,
+      "homeroom": "R301",
+      "blocked": [
+        [
+          3,
+          5
+        ],
+        [
+          3,
+          6
+        ],
+        [
+          3,
+          7
+        ]
+      ]
+    },
+    {
+      "id": "302",
+      "name": "3 年 2 班",
+      "grade": 3,
+      "homeroom": "R302",
+      "blocked": [
+        [
+          3,
+          5
+        ],
+        [
+          3,
+          6
+        ],
+        [
+          3,
+          7
+        ]
+      ]
+    },
+    {
+      "id": "401",
+      "name": "4 年 1 班",
+      "grade": 4,
+      "homeroom": "R401",
+      "blocked": [
+        [
+          3,
+          5
+        ],
+        [
+          3,
+          6
+        ],
+        [
+          3,
+          7
+        ]
+      ]
+    },
+    {
+      "id": "402",
+      "name": "4 年 2 班",
+      "grade": 4,
+      "homeroom": "R402",
+      "blocked": [
+        [
+          3,
+          5
+        ],
+        [
+          3,
+          6
+        ],
+        [
+          3,
+          7
+        ]
+      ]
+    },
+    {
+      "id": "501",
+      "name": "5 年 1 班",
+      "grade": 5,
+      "homeroom": "R501",
+      "blocked": [
+        [
+          3,
+          6
+        ],
+        [
+          3,
+          7
+        ]
+      ]
+    },
+    {
+      "id": "502",
+      "name": "5 年 2 班",
+      "grade": 5,
+      "homeroom": "R502",
+      "blocked": [
+        [
+          3,
+          6
+        ],
+        [
+          3,
+          7
+        ]
+      ]
+    },
+    {
+      "id": "601",
+      "name": "6 年 1 班",
+      "grade": 6,
+      "homeroom": "R601",
+      "blocked": [
+        [
+          3,
+          6
+        ],
+        [
+          3,
+          7
+        ]
+      ]
+    },
+    {
+      "id": "602",
+      "name": "6 年 2 班",
+      "grade": 6,
+      "homeroom": "R602",
+      "blocked": [
+        [
+          3,
+          6
+        ],
+        [
+          3,
+          7
+        ]
+      ]
+    }
+  ],
+  "teachers": [
+    {
+      "id": "S_MU",
+      "name": "音樂老師",
+      "max_per_week": 20,
+      "max_per_day": 5
+    },
+    {
+      "id": "S_AR",
+      "name": "美勞老師",
+      "max_per_week": 20,
+      "max_per_day": 5
+    },
+    {
+      "id": "S_CO",
+      "name": "電腦老師",
+      "max_per_week": 20,
+      "max_per_day": 5
+    },
+    {
+      "id": "S_PE",
+      "name": "體育老師",
+      "max_per_week": 26,
+      "max_per_day": 6
+    },
+    {
+      "id": "S_SC",
+      "name": "自然老師",
+      "max_per_week": 26,
+      "max_per_day": 6
+    },
+    {
+      "id": "S_EN1",
+      "name": "英語老師甲",
+      "max_per_week": 20,
+      "max_per_day": 5
+    },
+    {
+      "id": "S_EN2",
+      "name": "英語老師乙",
+      "max_per_week": 20,
+      "max_per_day": 5
+    },
+    {
+      "id": "HR_101",
+      "name": "101 導師",
+      "max_per_week": 24,
+      "max_per_day": 6
+    },
+    {
+      "id": "HR_102",
+      "name": "102 導師",
+      "max_per_week": 24,
+      "max_per_day": 6
+    },
+    {
+      "id": "HR_201",
+      "name": "201 導師",
+      "max_per_week": 24,
+      "max_per_day": 6
+    },
+    {
+      "id": "HR_202",
+      "name": "202 導師",
+      "max_per_week": 24,
+      "max_per_day": 6
+    },
+    {
+      "id": "HR_301",
+      "name": "301 導師",
+      "max_per_week": 24,
+      "max_per_day": 6
+    },
+    {
+      "id": "HR_302",
+      "name": "302 導師",
+      "max_per_week": 24,
+      "max_per_day": 6
+    },
+    {
+      "id": "HR_401",
+      "name": "401 導師",
+      "max_per_week": 24,
+      "max_per_day": 6
+    },
+    {
+      "id": "HR_402",
+      "name": "402 導師",
+      "max_per_week": 24,
+      "max_per_day": 6
+    },
+    {
+      "id": "HR_501",
+      "name": "501 導師",
+      "max_per_week": 24,
+      "max_per_day": 6
+    },
+    {
+      "id": "HR_502",
+      "name": "502 導師",
+      "max_per_week": 24,
+      "max_per_day": 6
+    },
+    {
+      "id": "HR_601",
+      "name": "601 導師",
+      "max_per_week": 24,
+      "max_per_day": 6
+    },
+    {
+      "id": "HR_602",
+      "name": "602 導師",
+      "max_per_week": 24,
+      "max_per_day": 6
+    }
+  ],
+  "requirements": [
+    {
+      "class_id": "101",
+      "subject_id": "CH",
+      "periods": 8,
+      "teacher_id": "HR_101",
+      "doubles": 0
+    },
+    {
+      "class_id": "101",
+      "subject_id": "MA",
+      "periods": 4,
+      "teacher_id": "HR_101",
+      "doubles": 0
+    },
+    {
+      "class_id": "101",
+      "subject_id": "LI",
+      "periods": 4,
+      "teacher_id": "HR_101",
+      "doubles": 1
+    },
+    {
+      "class_id": "101",
+      "subject_id": "IN",
+      "periods": 2,
+      "teacher_id": "HR_101",
+      "doubles": 1
+    },
+    {
+      "class_id": "101",
+      "subject_id": "HE",
+      "periods": 1,
+      "teacher_id": "HR_101",
+      "doubles": 0
+    },
+    {
+      "class_id": "101",
+      "subject_id": "MU",
+      "periods": 1,
+      "teacher_id": "S_MU",
+      "doubles": 0
+    },
+    {
+      "class_id": "101",
+      "subject_id": "PE",
+      "periods": 2,
+      "teacher_id": "S_PE",
+      "doubles": 0
+    },
+    {
+      "class_id": "101",
+      "subject_id": "AR",
+      "periods": 1,
+      "teacher_id": "S_AR",
+      "doubles": 0
+    },
+    {
+      "class_id": "101",
+      "subject_id": "CO",
+      "periods": 1,
+      "teacher_id": "S_CO",
+      "doubles": 0
+    },
+    {
+      "class_id": "102",
+      "subject_id": "CH",
+      "periods": 8,
+      "teacher_id": "HR_102",
+      "doubles": 0
+    },
+    {
+      "class_id": "102",
+      "subject_id": "MA",
+      "periods": 4,
+      "teacher_id": "HR_102",
+      "doubles": 0
+    },
+    {
+      "class_id": "102",
+      "subject_id": "LI",
+      "periods": 4,
+      "teacher_id": "HR_102",
+      "doubles": 1
+    },
+    {
+      "class_id": "102",
+      "subject_id": "IN",
+      "periods": 2,
+      "teacher_id": "HR_102",
+      "doubles": 1
+    },
+    {
+      "class_id": "102",
+      "subject_id": "HE",
+      "periods": 1,
+      "teacher_id": "HR_102",
+      "doubles": 0
+    },
+    {
+      "class_id": "102",
+      "subject_id": "MU",
+      "periods": 1,
+      "teacher_id": "S_MU",
+      "doubles": 0
+    },
+    {
+      "class_id": "102",
+      "subject_id": "PE",
+      "periods": 2,
+      "teacher_id": "S_PE",
+      "doubles": 0
+    },
+    {
+      "class_id": "102",
+      "subject_id": "AR",
+      "periods": 1,
+      "teacher_id": "S_AR",
+      "doubles": 0
+    },
+    {
+      "class_id": "102",
+      "subject_id": "CO",
+      "periods": 1,
+      "teacher_id": "S_CO",
+      "doubles": 0
+    },
+    {
+      "class_id": "201",
+      "subject_id": "CH",
+      "periods": 8,
+      "teacher_id": "HR_201",
+      "doubles": 0
+    },
+    {
+      "class_id": "201",
+      "subject_id": "MA",
+      "periods": 4,
+      "teacher_id": "HR_201",
+      "doubles": 0
+    },
+    {
+      "class_id": "201",
+      "subject_id": "LI",
+      "periods": 4,
+      "teacher_id": "HR_201",
+      "doubles": 1
+    },
+    {
+      "class_id": "201",
+      "subject_id": "IN",
+      "periods": 2,
+      "teacher_id": "HR_201",
+      "doubles": 1
+    },
+    {
+      "class_id": "201",
+      "subject_id": "HE",
+      "periods": 1,
+      "teacher_id": "HR_201",
+      "doubles": 0
+    },
+    {
+      "class_id": "201",
+      "subject_id": "MU",
+      "periods": 1,
+      "teacher_id": "S_MU",
+      "doubles": 0
+    },
+    {
+      "class_id": "201",
+      "subject_id": "PE",
+      "periods": 2,
+      "teacher_id": "S_PE",
+      "doubles": 0
+    },
+    {
+      "class_id": "201",
+      "subject_id": "AR",
+      "periods": 1,
+      "teacher_id": "S_AR",
+      "doubles": 0
+    },
+    {
+      "class_id": "201",
+      "subject_id": "CO",
+      "periods": 1,
+      "teacher_id": "S_CO",
+      "doubles": 0
+    },
+    {
+      "class_id": "202",
+      "subject_id": "CH",
+      "periods": 8,
+      "teacher_id": "HR_202",
+      "doubles": 0
+    },
+    {
+      "class_id": "202",
+      "subject_id": "MA",
+      "periods": 4,
+      "teacher_id": "HR_202",
+      "doubles": 0
+    },
+    {
+      "class_id": "202",
+      "subject_id": "LI",
+      "periods": 4,
+      "teacher_id": "HR_202",
+      "doubles": 1
+    },
+    {
+      "class_id": "202",
+      "subject_id": "IN",
+      "periods": 2,
+      "teacher_id": "HR_202",
+      "doubles": 1
+    },
+    {
+      "class_id": "202",
+      "subject_id": "HE",
+      "periods": 1,
+      "teacher_id": "HR_202",
+      "doubles": 0
+    },
+    {
+      "class_id": "202",
+      "subject_id": "MU",
+      "periods": 1,
+      "teacher_id": "S_MU",
+      "doubles": 0
+    },
+    {
+      "class_id": "202",
+      "subject_id": "PE",
+      "periods": 2,
+      "teacher_id": "S_PE",
+      "doubles": 0
+    },
+    {
+      "class_id": "202",
+      "subject_id": "AR",
+      "periods": 1,
+      "teacher_id": "S_AR",
+      "doubles": 0
+    },
+    {
+      "class_id": "202",
+      "subject_id": "CO",
+      "periods": 1,
+      "teacher_id": "S_CO",
+      "doubles": 0
+    },
+    {
+      "class_id": "301",
+      "subject_id": "CH",
+      "periods": 6,
+      "teacher_id": "HR_301",
+      "doubles": 0
+    },
+    {
+      "class_id": "301",
+      "subject_id": "MA",
+      "periods": 4,
+      "teacher_id": "HR_301",
+      "doubles": 0
+    },
+    {
+      "class_id": "301",
+      "subject_id": "SO",
+      "periods": 3,
+      "teacher_id": "HR_301",
+      "doubles": 0
+    },
+    {
+      "class_id": "301",
+      "subject_id": "IN",
+      "periods": 3,
+      "teacher_id": "HR_301",
+      "doubles": 1
+    },
+    {
+      "class_id": "301",
+      "subject_id": "HE",
+      "periods": 1,
+      "teacher_id": "HR_301",
+      "doubles": 0
+    },
+    {
+      "class_id": "301",
+      "subject_id": "FX",
+      "periods": 3,
+      "teacher_id": "HR_301",
+      "doubles": 0
+    },
+    {
+      "class_id": "301",
+      "subject_id": "MU",
+      "periods": 1,
+      "teacher_id": "S_MU",
+      "doubles": 0
+    },
+    {
+      "class_id": "301",
+      "subject_id": "PE",
+      "periods": 2,
+      "teacher_id": "S_PE",
+      "doubles": 0
+    },
+    {
+      "class_id": "301",
+      "subject_id": "AR",
+      "periods": 1,
+      "teacher_id": "S_AR",
+      "doubles": 0
+    },
+    {
+      "class_id": "301",
+      "subject_id": "CO",
+      "periods": 1,
+      "teacher_id": "S_CO",
+      "doubles": 0
+    },
+    {
+      "class_id": "301",
+      "subject_id": "EN",
+      "periods": 2,
+      "teacher_id": "S_EN1",
+      "doubles": 0
+    },
+    {
+      "class_id": "301",
+      "subject_id": "SC",
+      "periods": 3,
+      "teacher_id": "S_SC",
+      "doubles": 0
+    },
+    {
+      "class_id": "302",
+      "subject_id": "CH",
+      "periods": 6,
+      "teacher_id": "HR_302",
+      "doubles": 0
+    },
+    {
+      "class_id": "302",
+      "subject_id": "MA",
+      "periods": 4,
+      "teacher_id": "HR_302",
+      "doubles": 0
+    },
+    {
+      "class_id": "302",
+      "subject_id": "SO",
+      "periods": 3,
+      "teacher_id": "HR_302",
+      "doubles": 0
+    },
+    {
+      "class_id": "302",
+      "subject_id": "IN",
+      "periods": 3,
+      "teacher_id": "HR_302",
+      "doubles": 1
+    },
+    {
+      "class_id": "302",
+      "subject_id": "HE",
+      "periods": 1,
+      "teacher_id": "HR_302",
+      "doubles": 0
+    },
+    {
+      "class_id": "302",
+      "subject_id": "FX",
+      "periods": 3,
+      "teacher_id": "HR_302",
+      "doubles": 0
+    },
+    {
+      "class_id": "302",
+      "subject_id": "MU",
+      "periods": 1,
+      "teacher_id": "S_MU",
+      "doubles": 0
+    },
+    {
+      "class_id": "302",
+      "subject_id": "PE",
+      "periods": 2,
+      "teacher_id": "S_PE",
+      "doubles": 0
+    },
+    {
+      "class_id": "302",
+      "subject_id": "AR",
+      "periods": 1,
+      "teacher_id": "S_AR",
+      "doubles": 0
+    },
+    {
+      "class_id": "302",
+      "subject_id": "CO",
+      "periods": 1,
+      "teacher_id": "S_CO",
+      "doubles": 0
+    },
+    {
+      "class_id": "302",
+      "subject_id": "EN",
+      "periods": 2,
+      "teacher_id": "S_EN2",
+      "doubles": 0
+    },
+    {
+      "class_id": "302",
+      "subject_id": "SC",
+      "periods": 3,
+      "teacher_id": "S_SC",
+      "doubles": 0
+    },
+    {
+      "class_id": "401",
+      "subject_id": "CH",
+      "periods": 6,
+      "teacher_id": "HR_401",
+      "doubles": 0
+    },
+    {
+      "class_id": "401",
+      "subject_id": "MA",
+      "periods": 4,
+      "teacher_id": "HR_401",
+      "doubles": 0
+    },
+    {
+      "class_id": "401",
+      "subject_id": "SO",
+      "periods": 3,
+      "teacher_id": "HR_401",
+      "doubles": 0
+    },
+    {
+      "class_id": "401",
+      "subject_id": "IN",
+      "periods": 3,
+      "teacher_id": "HR_401",
+      "doubles": 1
+    },
+    {
+      "class_id": "401",
+      "subject_id": "HE",
+      "periods": 1,
+      "teacher_id": "HR_401",
+      "doubles": 0
+    },
+    {
+      "class_id": "401",
+      "subject_id": "FX",
+      "periods": 3,
+      "teacher_id": "HR_401",
+      "doubles": 0
+    },
+    {
+      "class_id": "401",
+      "subject_id": "MU",
+      "periods": 1,
+      "teacher_id": "S_MU",
+      "doubles": 0
+    },
+    {
+      "class_id": "401",
+      "subject_id": "PE",
+      "periods": 2,
+      "teacher_id": "S_PE",
+      "doubles": 0
+    },
+    {
+      "class_id": "401",
+      "subject_id": "AR",
+      "periods": 1,
+      "teacher_id": "S_AR",
+      "doubles": 0
+    },
+    {
+      "class_id": "401",
+      "subject_id": "CO",
+      "periods": 1,
+      "teacher_id": "S_CO",
+      "doubles": 0
+    },
+    {
+      "class_id": "401",
+      "subject_id": "EN",
+      "periods": 2,
+      "teacher_id": "S_EN1",
+      "doubles": 0
+    },
+    {
+      "class_id": "401",
+      "subject_id": "SC",
+      "periods": 3,
+      "teacher_id": "S_SC",
+      "doubles": 0
+    },
+    {
+      "class_id": "402",
+      "subject_id": "CH",
+      "periods": 6,
+      "teacher_id": "HR_402",
+      "doubles": 0
+    },
+    {
+      "class_id": "402",
+      "subject_id": "MA",
+      "periods": 4,
+      "teacher_id": "HR_402",
+      "doubles": 0
+    },
+    {
+      "class_id": "402",
+      "subject_id": "SO",
+      "periods": 3,
+      "teacher_id": "HR_402",
+      "doubles": 0
+    },
+    {
+      "class_id": "402",
+      "subject_id": "IN",
+      "periods": 3,
+      "teacher_id": "HR_402",
+      "doubles": 1
+    },
+    {
+      "class_id": "402",
+      "subject_id": "HE",
+      "periods": 1,
+      "teacher_id": "HR_402",
+      "doubles": 0
+    },
+    {
+      "class_id": "402",
+      "subject_id": "FX",
+      "periods": 3,
+      "teacher_id": "HR_402",
+      "doubles": 0
+    },
+    {
+      "class_id": "402",
+      "subject_id": "MU",
+      "periods": 1,
+      "teacher_id": "S_MU",
+      "doubles": 0
+    },
+    {
+      "class_id": "402",
+      "subject_id": "PE",
+      "periods": 2,
+      "teacher_id": "S_PE",
+      "doubles": 0
+    },
+    {
+      "class_id": "402",
+      "subject_id": "AR",
+      "periods": 1,
+      "teacher_id": "S_AR",
+      "doubles": 0
+    },
+    {
+      "class_id": "402",
+      "subject_id": "CO",
+      "periods": 1,
+      "teacher_id": "S_CO",
+      "doubles": 0
+    },
+    {
+      "class_id": "402",
+      "subject_id": "EN",
+      "periods": 2,
+      "teacher_id": "S_EN2",
+      "doubles": 0
+    },
+    {
+      "class_id": "402",
+      "subject_id": "SC",
+      "periods": 3,
+      "teacher_id": "S_SC",
+      "doubles": 0
+    },
+    {
+      "class_id": "501",
+      "subject_id": "CH",
+      "periods": 6,
+      "teacher_id": "HR_501",
+      "doubles": 0
+    },
+    {
+      "class_id": "501",
+      "subject_id": "MA",
+      "periods": 4,
+      "teacher_id": "HR_501",
+      "doubles": 0
+    },
+    {
+      "class_id": "501",
+      "subject_id": "SO",
+      "periods": 3,
+      "teacher_id": "HR_501",
+      "doubles": 0
+    },
+    {
+      "class_id": "501",
+      "subject_id": "IN",
+      "periods": 3,
+      "teacher_id": "HR_501",
+      "doubles": 1
+    },
+    {
+      "class_id": "501",
+      "subject_id": "HE",
+      "periods": 1,
+      "teacher_id": "HR_501",
+      "doubles": 0
+    },
+    {
+      "class_id": "501",
+      "subject_id": "FX",
+      "periods": 5,
+      "teacher_id": "HR_501",
+      "doubles": 0
+    },
+    {
+      "class_id": "501",
+      "subject_id": "MU",
+      "periods": 1,
+      "teacher_id": "S_MU",
+      "doubles": 0
+    },
+    {
+      "class_id": "501",
+      "subject_id": "PE",
+      "periods": 2,
+      "teacher_id": "S_PE",
+      "doubles": 0
+    },
+    {
+      "class_id": "501",
+      "subject_id": "AR",
+      "periods": 1,
+      "teacher_id": "S_AR",
+      "doubles": 0
+    },
+    {
+      "class_id": "501",
+      "subject_id": "CO",
+      "periods": 1,
+      "teacher_id": "S_CO",
+      "doubles": 0
+    },
+    {
+      "class_id": "501",
+      "subject_id": "EN",
+      "periods": 2,
+      "teacher_id": "S_EN1",
+      "doubles": 0
+    },
+    {
+      "class_id": "501",
+      "subject_id": "SC",
+      "periods": 3,
+      "teacher_id": "S_SC",
+      "doubles": 0
+    },
+    {
+      "class_id": "502",
+      "subject_id": "CH",
+      "periods": 6,
+      "teacher_id": "HR_502",
+      "doubles": 0
+    },
+    {
+      "class_id": "502",
+      "subject_id": "MA",
+      "periods": 4,
+      "teacher_id": "HR_502",
+      "doubles": 0
+    },
+    {
+      "class_id": "502",
+      "subject_id": "SO",
+      "periods": 3,
+      "teacher_id": "HR_502",
+      "doubles": 0
+    },
+    {
+      "class_id": "502",
+      "subject_id": "IN",
+      "periods": 3,
+      "teacher_id": "HR_502",
+      "doubles": 1
+    },
+    {
+      "class_id": "502",
+      "subject_id": "HE",
+      "periods": 1,
+      "teacher_id": "HR_502",
+      "doubles": 0
+    },
+    {
+      "class_id": "502",
+      "subject_id": "FX",
+      "periods": 5,
+      "teacher_id": "HR_502",
+      "doubles": 0
+    },
+    {
+      "class_id": "502",
+      "subject_id": "MU",
+      "periods": 1,
+      "teacher_id": "S_MU",
+      "doubles": 0
+    },
+    {
+      "class_id": "502",
+      "subject_id": "PE",
+      "periods": 2,
+      "teacher_id": "S_PE",
+      "doubles": 0
+    },
+    {
+      "class_id": "502",
+      "subject_id": "AR",
+      "periods": 1,
+      "teacher_id": "S_AR",
+      "doubles": 0
+    },
+    {
+      "class_id": "502",
+      "subject_id": "CO",
+      "periods": 1,
+      "teacher_id": "S_CO",
+      "doubles": 0
+    },
+    {
+      "class_id": "502",
+      "subject_id": "EN",
+      "periods": 2,
+      "teacher_id": "S_EN2",
+      "doubles": 0
+    },
+    {
+      "class_id": "502",
+      "subject_id": "SC",
+      "periods": 3,
+      "teacher_id": "S_SC",
+      "doubles": 0
+    },
+    {
+      "class_id": "601",
+      "subject_id": "CH",
+      "periods": 6,
+      "teacher_id": "HR_601",
+      "doubles": 0
+    },
+    {
+      "class_id": "601",
+      "subject_id": "MA",
+      "periods": 4,
+      "teacher_id": "HR_601",
+      "doubles": 0
+    },
+    {
+      "class_id": "601",
+      "subject_id": "SO",
+      "periods": 3,
+      "teacher_id": "HR_601",
+      "doubles": 0
+    },
+    {
+      "class_id": "601",
+      "subject_id": "IN",
+      "periods": 3,
+      "teacher_id": "HR_601",
+      "doubles": 1
+    },
+    {
+      "class_id": "601",
+      "subject_id": "HE",
+      "periods": 1,
+      "teacher_id": "HR_601",
+      "doubles": 0
+    },
+    {
+      "class_id": "601",
+      "subject_id": "FX",
+      "periods": 5,
+      "teacher_id": "HR_601",
+      "doubles": 0
+    },
+    {
+      "class_id": "601",
+      "subject_id": "MU",
+      "periods": 1,
+      "teacher_id": "S_MU",
+      "doubles": 0
+    },
+    {
+      "class_id": "601",
+      "subject_id": "PE",
+      "periods": 2,
+      "teacher_id": "S_PE",
+      "doubles": 0
+    },
+    {
+      "class_id": "601",
+      "subject_id": "AR",
+      "periods": 1,
+      "teacher_id": "S_AR",
+      "doubles": 0
+    },
+    {
+      "class_id": "601",
+      "subject_id": "CO",
+      "periods": 1,
+      "teacher_id": "S_CO",
+      "doubles": 0
+    },
+    {
+      "class_id": "601",
+      "subject_id": "EN",
+      "periods": 2,
+      "teacher_id": "S_EN1",
+      "doubles": 0
+    },
+    {
+      "class_id": "601",
+      "subject_id": "SC",
+      "periods": 3,
+      "teacher_id": "S_SC",
+      "doubles": 0
+    },
+    {
+      "class_id": "602",
+      "subject_id": "CH",
+      "periods": 6,
+      "teacher_id": "HR_602",
+      "doubles": 0
+    },
+    {
+      "class_id": "602",
+      "subject_id": "MA",
+      "periods": 4,
+      "teacher_id": "HR_602",
+      "doubles": 0
+    },
+    {
+      "class_id": "602",
+      "subject_id": "SO",
+      "periods": 3,
+      "teacher_id": "HR_602",
+      "doubles": 0
+    },
+    {
+      "class_id": "602",
+      "subject_id": "IN",
+      "periods": 3,
+      "teacher_id": "HR_602",
+      "doubles": 1
+    },
+    {
+      "class_id": "602",
+      "subject_id": "HE",
+      "periods": 1,
+      "teacher_id": "HR_602",
+      "doubles": 0
+    },
+    {
+      "class_id": "602",
+      "subject_id": "FX",
+      "periods": 5,
+      "teacher_id": "HR_602",
+      "doubles": 0
+    },
+    {
+      "class_id": "602",
+      "subject_id": "MU",
+      "periods": 1,
+      "teacher_id": "S_MU",
+      "doubles": 0
+    },
+    {
+      "class_id": "602",
+      "subject_id": "PE",
+      "periods": 2,
+      "teacher_id": "S_PE",
+      "doubles": 0
+    },
+    {
+      "class_id": "602",
+      "subject_id": "AR",
+      "periods": 1,
+      "teacher_id": "S_AR",
+      "doubles": 0
+    },
+    {
+      "class_id": "602",
+      "subject_id": "CO",
+      "periods": 1,
+      "teacher_id": "S_CO",
+      "doubles": 0
+    },
+    {
+      "class_id": "602",
+      "subject_id": "EN",
+      "periods": 2,
+      "teacher_id": "S_EN2",
+      "doubles": 0
+    },
+    {
+      "class_id": "602",
+      "subject_id": "SC",
+      "periods": 3,
+      "teacher_id": "S_SC",
+      "doubles": 0
+    }
+  ],
+  "constraints": [
+    {
+      "kind": "TEACHER_DAY_OFF",
+      "params": {
+        "teacher": "S_EN1",
+        "day": 3
+      },
+      "hardness": "soft",
+      "weight": 200
+    },
+    {
+      "kind": "TEACHER_UNAVAILABLE",
+      "params": {
+        "teacher": "S_MU",
+        "days": [
+          5
+        ],
+        "periods": [
+          5,
+          6,
+          7
+        ]
+      },
+      "hardness": "hard"
+    },
+    {
+      "kind": "TEACHER_DAY_OFF",
+      "params": {
+        "teacher": "HR_101",
+        "day": 5
+      },
+      "hardness": "soft",
+      "weight": 150
+    },
+    {
+      "kind": "TEACHER_MAX_PER_DAY",
+      "params": {
+        "teacher": "S_PE",
+        "max": 5
+      },
+      "hardness": "soft"
+    },
+    {
+      "kind": "TEACHER_MAX_PER_DAY",
+      "params": {
+        "teacher": "S_SC",
+        "max": 5
+      },
+      "hardness": "soft"
+    },
+    {
+      "kind": "TEACHER_MAX_RUN",
+      "params": {
+        "teacher": "S_PE",
+        "max": 3
+      },
+      "hardness": "soft"
+    },
+    {
+      "kind": "TEACHER_COMPACT",
+      "params": {
+        "teacher": "S_MU"
+      },
+      "hardness": "soft"
+    },
+    {
+      "kind": "TEACHER_COMPACT",
+      "params": {
+        "teacher": "S_CO"
+      },
+      "hardness": "soft"
+    },
+    {
+      "kind": "TEACHER_COMPACT",
+      "params": {
+        "teacher": "S_AR"
+      },
+      "hardness": "soft"
+    },
+    {
+      "kind": "SUBJECT_SPREAD",
+      "params": {
+        "subject": "CH",
+        "max": 2
+      },
+      "hardness": "soft"
+    },
+    {
+      "kind": "SUBJECT_SPREAD",
+      "params": {
+        "subject": "MA",
+        "max": 1
+      },
+      "hardness": "soft"
+    },
+    {
+      "kind": "SUBJECT_SPREAD",
+      "params": {
+        "subject": "EN",
+        "max": 1
+      },
+      "hardness": "soft"
+    },
+    {
+      "kind": "SUBJECT_NOT_IN",
+      "params": {
+        "subject": "PE",
+        "periods": [
+          5
+        ]
+      },
+      "hardness": "soft"
+    },
+    {
+      "kind": "CORE_IN_MORNING",
+      "params": {},
+      "hardness": "soft"
+    }
+  ]
+}
