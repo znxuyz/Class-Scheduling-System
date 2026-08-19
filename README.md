@@ -13,13 +13,27 @@
 - 吸收老師的個別需求：哪幾天不排課、一天不超過幾節、不要連上太多節⋯⋯
 - 需求彼此打架時，給出**違反最少**的課表並說明犧牲了什麼，而不是丟一句「無解」
 
+## 排課流程
+
+依實務做法分兩階段（詳見 [DESIGN.md §7](docs/DESIGN.md)）：
+
+1. **配課**：設定每位老師要上哪些課，即時檢查鐘點有沒有超載
+2. **Phase 1**：科任 + 兼行政教師先排（跨班跑、搶專科教室，最難排）
+3. **Phase 2**：剩下的空格給導師 —— 導師只教自己班，所以各班完全獨立，
+   可以自動排，也可以直接讓導師在介面上拖拉
+
+關鍵：Phase 1 必須為 Phase 2 保留可用的空格形狀，否則導師會排不出來。
+實測不做這件事，6 次有 6 次會有班級 `INFEASIBLE`。
+
 ## 快速開始
 
 ```bash
 pip install ortools
 cd prototype
-python3 gen_sample.py                  # 產生 12 班的範例學校
-python3 run.py --class 101 --teacher S_PE --room MUS1
+python3 gen_sample.py                       # 產生 12 班的範例學校
+python3 run.py --phased --class 502          # 分階段排課（實務流程）
+python3 run.py --class 101 --teacher S_PE    # 全校一次求解
+python3 compare_handoff.py                   # 交接品質對照實驗
 ```
 
 ## 實測
@@ -28,6 +42,12 @@ python3 run.py --class 101 --teacher S_PE --room MUS1
 |---|---|---|
 | 範例國小 | 12 班 / 19 師 / 328 單元 | **OPTIMAL，1.7 秒**，硬衝突 0 件 |
 | 大型國小 | 48 班 / 75 師 / 1312 單元 | **OPTIMAL，31.7 秒**，硬衝突 0 件 |
+| 分階段排課 | Phase 1 100 單元 / Phase 2 228 單元 | Phase 1 **1.1 秒**、Phase 2 十二班合計 **0.3 秒** |
+
+| Phase 1 策略 | Phase 2 失敗次數（6 次試驗） | Phase 2 懲罰 |
+|---|---|---|
+| 只顧科任方便 | **6 / 6** | 150 ~ 300 |
+| 為導師保留空格 | **0 / 6** | **0** |
 
 ## 原型結構
 
@@ -35,6 +55,8 @@ python3 run.py --class 101 --teacher S_PE --room MUS1
 |---|---|
 | `prototype/model.py` | 領域模型、統一約束結構、前置可行性檢查 |
 | `prototype/solver.py` | CP-SAT 建模與求解 |
+| `prototype/phased.py` | 分階段排課與交接品質評估 |
+| `prototype/compare_handoff.py` | 交接品質對照實驗 |
 | `prototype/render.py` | 班級／教師／教室三視角輸出與驗證 |
 | `prototype/gen_sample.py` | 產生範例學校資料 |
 | `prototype/run.py` | CLI 進入點 |

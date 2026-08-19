@@ -474,115 +474,148 @@
       "id": "S_MU",
       "name": "音樂老師",
       "max_per_week": 20,
-      "max_per_day": 5
+      "max_per_day": 5,
+      "role": "special"
     },
     {
       "id": "S_AR",
       "name": "美勞老師",
       "max_per_week": 20,
-      "max_per_day": 5
+      "max_per_day": 5,
+      "role": "special"
+    },
+    {
+      "id": "A_STU",
+      "name": "學務主任",
+      "max_per_week": 10,
+      "max_per_day": 3,
+      "role": "admin"
     },
     {
       "id": "S_CO",
       "name": "電腦老師",
       "max_per_week": 20,
-      "max_per_day": 5
+      "max_per_day": 5,
+      "role": "special"
+    },
+    {
+      "id": "A_ACA",
+      "name": "教務主任",
+      "max_per_week": 10,
+      "max_per_day": 3,
+      "role": "admin"
     },
     {
       "id": "S_PE",
       "name": "體育老師",
       "max_per_week": 26,
-      "max_per_day": 6
+      "max_per_day": 6,
+      "role": "special"
     },
     {
       "id": "S_SC",
       "name": "自然老師",
       "max_per_week": 26,
-      "max_per_day": 6
+      "max_per_day": 6,
+      "role": "special"
     },
     {
       "id": "S_EN1",
       "name": "英語老師甲",
       "max_per_week": 20,
-      "max_per_day": 5
+      "max_per_day": 5,
+      "role": "special"
     },
     {
       "id": "S_EN2",
       "name": "英語老師乙",
       "max_per_week": 20,
-      "max_per_day": 5
+      "max_per_day": 5,
+      "role": "special"
     },
     {
       "id": "HR_101",
       "name": "101 導師",
       "max_per_week": 24,
-      "max_per_day": 6
+      "max_per_day": 6,
+      "role": "homeroom"
     },
     {
       "id": "HR_102",
       "name": "102 導師",
       "max_per_week": 24,
-      "max_per_day": 6
+      "max_per_day": 6,
+      "role": "homeroom"
     },
     {
       "id": "HR_201",
       "name": "201 導師",
       "max_per_week": 24,
-      "max_per_day": 6
+      "max_per_day": 6,
+      "role": "homeroom"
     },
     {
       "id": "HR_202",
       "name": "202 導師",
       "max_per_week": 24,
-      "max_per_day": 6
+      "max_per_day": 6,
+      "role": "homeroom"
     },
     {
       "id": "HR_301",
       "name": "301 導師",
       "max_per_week": 24,
-      "max_per_day": 6
+      "max_per_day": 6,
+      "role": "homeroom"
     },
     {
       "id": "HR_302",
       "name": "302 導師",
       "max_per_week": 24,
-      "max_per_day": 6
+      "max_per_day": 6,
+      "role": "homeroom"
     },
     {
       "id": "HR_401",
       "name": "401 導師",
       "max_per_week": 24,
-      "max_per_day": 6
+      "max_per_day": 6,
+      "role": "homeroom"
     },
     {
       "id": "HR_402",
       "name": "402 導師",
       "max_per_week": 24,
-      "max_per_day": 6
+      "max_per_day": 6,
+      "role": "homeroom"
     },
     {
       "id": "HR_501",
       "name": "501 導師",
       "max_per_week": 24,
-      "max_per_day": 6
+      "max_per_day": 6,
+      "role": "homeroom"
     },
     {
       "id": "HR_502",
       "name": "502 導師",
       "max_per_week": 24,
-      "max_per_day": 6
+      "max_per_day": 6,
+      "role": "homeroom"
     },
     {
       "id": "HR_601",
       "name": "601 導師",
       "max_per_week": 24,
-      "max_per_day": 6
+      "max_per_day": 6,
+      "role": "homeroom"
     },
     {
       "id": "HR_602",
       "name": "602 導師",
       "max_per_week": 24,
-      "max_per_day": 6
+      "max_per_day": 6,
+      "role": "homeroom"
     }
   ],
   "requirements": [
@@ -702,14 +735,14 @@
       "class_id": "102",
       "subject_id": "AR",
       "periods": 1,
-      "teacher_id": "S_AR",
+      "teacher_id": "A_STU",
       "doubles": 0
     },
     {
       "class_id": "102",
       "subject_id": "CO",
       "periods": 1,
-      "teacher_id": "S_CO",
+      "teacher_id": "A_ACA",
       "doubles": 0
     },
     {
@@ -828,14 +861,14 @@
       "class_id": "202",
       "subject_id": "AR",
       "periods": 1,
-      "teacher_id": "S_AR",
+      "teacher_id": "A_STU",
       "doubles": 0
     },
     {
       "class_id": "202",
       "subject_id": "CO",
       "periods": 1,
-      "teacher_id": "S_CO",
+      "teacher_id": "A_ACA",
       "doubles": 0
     },
     {
@@ -982,14 +1015,14 @@
       "class_id": "302",
       "subject_id": "AR",
       "periods": 1,
-      "teacher_id": "S_AR",
+      "teacher_id": "A_STU",
       "doubles": 0
     },
     {
       "class_id": "302",
       "subject_id": "CO",
       "periods": 1,
-      "teacher_id": "S_CO",
+      "teacher_id": "A_ACA",
       "doubles": 0
     },
     {
@@ -1150,14 +1183,14 @@
       "class_id": "402",
       "subject_id": "AR",
       "periods": 1,
-      "teacher_id": "S_AR",
+      "teacher_id": "A_STU",
       "doubles": 0
     },
     {
       "class_id": "402",
       "subject_id": "CO",
       "periods": 1,
-      "teacher_id": "S_CO",
+      "teacher_id": "A_ACA",
       "doubles": 0
     },
     {
@@ -1318,14 +1351,14 @@
       "class_id": "502",
       "subject_id": "AR",
       "periods": 1,
-      "teacher_id": "S_AR",
+      "teacher_id": "A_STU",
       "doubles": 0
     },
     {
       "class_id": "502",
       "subject_id": "CO",
       "periods": 1,
-      "teacher_id": "S_CO",
+      "teacher_id": "A_ACA",
       "doubles": 0
     },
     {
@@ -1486,14 +1519,14 @@
       "class_id": "602",
       "subject_id": "AR",
       "periods": 1,
-      "teacher_id": "S_AR",
+      "teacher_id": "A_STU",
       "doubles": 0
     },
     {
       "class_id": "602",
       "subject_id": "CO",
       "periods": 1,
-      "teacher_id": "S_CO",
+      "teacher_id": "A_ACA",
       "doubles": 0
     },
     {
@@ -1512,6 +1545,58 @@
     }
   ],
   "constraints": [
+    {
+      "kind": "TEACHER_UNAVAILABLE",
+      "params": {
+        "teacher": "A_ACA",
+        "days": [
+          1
+        ],
+        "periods": [
+          1,
+          2
+        ]
+      },
+      "hardness": "hard"
+    },
+    {
+      "kind": "TEACHER_UNAVAILABLE",
+      "params": {
+        "teacher": "A_STU",
+        "days": [
+          1
+        ],
+        "periods": [
+          1,
+          2
+        ]
+      },
+      "hardness": "hard"
+    },
+    {
+      "kind": "HOMEROOM_DAY_CAPACITY",
+      "params": {},
+      "hardness": "soft"
+    },
+    {
+      "kind": "HOMEROOM_DAY_OFF",
+      "params": {},
+      "hardness": "soft"
+    },
+    {
+      "kind": "RESERVE_MORNING",
+      "params": {
+        "max_per_class": 4
+      },
+      "hardness": "soft"
+    },
+    {
+      "kind": "SPECIAL_BALANCE",
+      "params": {
+        "max_per_day": 3
+      },
+      "hardness": "soft"
+    },
     {
       "kind": "TEACHER_DAY_OFF",
       "params": {

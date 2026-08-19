@@ -56,16 +56,46 @@ DEFAULT_WEIGHTS = {
     "TEACHER_COMPACT": 5,
     "SUBJECT_NOT_IN": 8,
     "CORE_IN_MORNING": 2,
+    "RESERVE_MORNING": 30,
+    "SPECIAL_BALANCE": 15,
+    "HOMEROOM_DAY_CAPACITY": 500,
+    "HOMEROOM_DAY_OFF": 150,
 }
 
 
 class Scheduler:
-    def __init__(self, school: School, *, time_limit: float = 60.0, workers: int = 8):
+    def __init__(
+        self,
+        school: School,
+        *,
+        units: list[Unit] | None = None,
+        fixed: list["Placement"] | None = None,
+        time_limit: float = 60.0,
+        workers: int = 8,
+    ):
+        """units 指定本階段要排的單元子集（預設全部）。
+
+        fixed 是先前階段已排定的課，它們不再是決策變數，而是把對應的
+        班級／教師／教室資源標記為已佔用 —— 直接不建立會撞上的變數，
+        分階段排課因此不需要任何額外的約束機制。
+        """
         self.school = school
         self.grid = school.grid
-        self.units = school.build_units()
+        self.units = units if units is not None else school.build_units()
+        # Unit.index 是全體單元的編號；分階段求解時 self.units 只是子集，
+        # 因此一律透過這張表反查，不可用位置索引。
+        self.by_index = {u.index: u for u in self.units}
         self.time_limit = time_limit
         self.workers = workers
+
+        self.busy_class: set[tuple[str, int]] = set()
+        self.busy_teacher: set[tuple[str, int]] = set()
+        self.busy_room: set[tuple[str, int]] = set()
+        for pl in fixed or []:
+            for s in pl.slots():
+                self.busy_class.add((pl.unit.class_id, s))
+                self.busy_teacher.add((pl.unit.teacher_id, s))
+                self.busy_room.add((pl.room_id, s))
 
         self.m = cp_model.CpModel()
         self.x: dict[tuple[int, int, str], cp_model.IntVar] = {}
@@ -80,6 +110,8 @@ class Scheduler:
         cls = self.school.classes[unit.class_id]
         blocked = set(cls.blocked) | self.school.teacher_blocked_slots(unit.teacher_id)
         blocked |= self._subject_hard_blocked(unit.subject_id)
+        blocked |= {s for (c, s) in self.busy_class if c == cls.id}
+        blocked |= {s for (t, s) in self.busy_teacher if t == unit.teacher_id}
 
         starts = []
         for s in self.grid.all_slots():
@@ -113,13 +145,21 @@ class Scheduler:
                     f"{u.class_id}/{u.subject_id} 找不到任何合法時段 —— "
                     f"硬性限制彼此矛盾，請放寬其中一項"
                 )
+            created = 0
             for s in starts:
                 for r in self.school.candidate_rooms(u):
+                    if any((r, s + i) in self.busy_room for i in range(u.length)):
+                        continue
                     self.x[(u.index, s, r)] = self.m.NewBoolVar(f"x_{u.index}_{s}_{r}")
+                    created += 1
+            if created == 0:
+                raise ValueError(
+                    f"{u.class_id}/{u.subject_id} 在先前階段排完後已無可用時段／教室"
+                )
 
     def _covers(self, unit_idx: int, slot: int) -> list[cp_model.IntVar]:
         """所有讓 unit 佔用到 slot 的變數（含連堂從前一節開始的情況）。"""
-        u = self.units[unit_idx]
+        u = self.by_index[unit_idx]
         out = []
         for offset in range(u.length):
             key_slot = slot - offset
@@ -130,7 +170,7 @@ class Scheduler:
         return out
 
     def _covers_room(self, unit_idx: int, slot: int, room: str) -> list[cp_model.IntVar]:
-        u = self.units[unit_idx]
+        u = self.by_index[unit_idx]
         out = []
         for offset in range(u.length):
             v = self.x.get((unit_idx, slot - offset, room))
@@ -192,7 +232,11 @@ class Scheduler:
                     for v in self._covers(u.index, s)
                 ]
                 if terms:
-                    self.m.Add(sum(terms) <= t.max_per_day)
+                    used = sum(
+                        1 for s in self.grid.slots_of_day(d)
+                        if (t.id, s) in self.busy_teacher
+                    )
+                    self.m.Add(sum(terms) <= t.max_per_day - used)
 
         # 硬性的 TEACHER_MAX_PER_DAY 需求
         for c in self.school.constraints:
@@ -330,6 +374,104 @@ class Scheduler:
                     self.m.Add(cnt == sum(terms))
                     self._add_penalty(cnt, w, f"{sname}避開第 {periods} 節")
 
+            elif c.kind == "RESERVE_MORNING":
+                # 分階段排課的關鍵：本階段（科任／行政）盡量少佔各班的上午時段，
+                # 把上午留給導師的主科。沒有這一條，導師拿到的會是一堆下午空格。
+                cap = c.params["max_per_class"]
+                for cls in self.school.classes.values():
+                    morning = [
+                        g.slot(d, p) for d in range(1, g.days + 1) for p in g.morning
+                    ]
+                    terms = [
+                        v_ for u in self.units if u.class_id == cls.id
+                        for s in morning for v_ in self._covers(u.index, s)
+                    ]
+                    if not terms:
+                        continue
+                    over = self.m.NewIntVar(0, len(morning), f"rm_{cls.id}")
+                    self.m.Add(over >= sum(terms) - cap)
+                    self._add_penalty(
+                        over, w, f"{cls.name} 上午被科任佔用不超過 {cap} 節"
+                    )
+
+            elif c.kind == "SPECIAL_BALANCE":
+                # 本階段的課要平均分散到五天，否則某天科任塞滿、某天全空，
+                # 導師拿到的空格形狀會很難用。
+                cap = c.params["max_per_day"]
+                for cls in self.school.classes.values():
+                    for d in range(1, g.days + 1):
+                        terms = [
+                            v_ for u in self.units if u.class_id == cls.id
+                            for s in g.slots_of_day(d) for v_ in self._covers(u.index, s)
+                        ]
+                        if not terms:
+                            continue
+                        over = self.m.NewIntVar(0, g.periods, f"sb_{cls.id}_{d}")
+                        self.m.Add(over >= sum(terms) - cap)
+                        self._add_penalty(
+                            over, w, f"{cls.name} 每天科任課不超過 {cap} 節"
+                        )
+
+            elif c.kind == "HOMEROOM_DAY_CAPACITY":
+                # 分階段排課的可行性前提，由 Phase 2 反推而來：
+                # 導師一天最多上 cap 節，所以每個班每天留給導師的空格
+                # 不能超過 cap ——「科任佔用數 ≥ 當天要上課的格數 − cap」。
+                # 少了這條，Phase 1 可能把某班的週一塞滿、週四全空，
+                # 導師那 7 格空堂一天上不完，Phase 2 直接 INFEASIBLE。
+                for cls in self.school.classes.values():
+                    hr = self.school.homeroom_teacher_of(cls.id)
+                    if hr is None:
+                        continue
+                    cap = self.school.hard_day_cap(hr.id)
+                    for d in range(1, g.days + 1):
+                        teachable = self.school.teachable_slots(cls.id, d)
+                        floor = len(teachable) - cap
+                        if floor <= 0:
+                            continue
+                        occ = [
+                            v_ for u in self.units if u.class_id == cls.id
+                            for s in teachable for v_ in self._covers(u.index, s)
+                        ]
+                        if not occ:
+                            continue
+                        short = self.m.NewIntVar(0, floor, f"hc_{cls.id}_{d}")
+                        self.m.Add(short >= floor - sum(occ))
+                        self._add_penalty(
+                            short, w,
+                            f"{cls.name} 週{'一二三四五'[d - 1]}留給導師的空格超出其日上限",
+                        )
+
+            elif c.kind == "HOMEROOM_DAY_OFF":
+                # 導師的「某天不排課」只能靠科任課填滿該班那天來達成 ——
+                # 導師的課全在自己班，班上那天只要還有空格，他就得來上課。
+                # 這個需求因此必須在 Phase 1 就納入，Phase 2 再想已經來不及。
+                for dc in self.school.constraints:
+                    if dc.kind != "TEACHER_DAY_OFF":
+                        continue
+                    tid = dc.params["teacher"]
+                    t = self.school.teachers.get(tid)
+                    if t is None or t.role != "homeroom":
+                        continue
+                    day = dc.params["day"]
+                    for cls in self.school.classes.values():
+                        if self.school.homeroom_teacher_of(cls.id) is not t:
+                            continue
+                        teachable = self.school.teachable_slots(cls.id, day)
+                        occ = [
+                            v_ for u in self.units if u.class_id == cls.id
+                            for s in teachable for v_ in self._covers(u.index, s)
+                        ]
+                        if not occ:
+                            continue
+                        short = self.m.NewIntVar(0, len(teachable), f"hdo_{cls.id}")
+                        self.m.Add(short >= len(teachable) - sum(occ))
+                        weight = dc.weight if dc.weight != 1 else w
+                        self._add_penalty(
+                            short, weight,
+                            f"{t.name} 希望週{'一二三四五'[day - 1]}不排課"
+                            f"（{cls.name}該日尚未被科任填滿的格數）",
+                        )
+
             elif c.kind == "CORE_IN_MORNING":
                 core = [s.id for s in self.school.subjects.values() if s.is_core]
                 afternoon = [
@@ -374,7 +516,7 @@ class Scheduler:
             return Solution(solver.StatusName(status), [], -1, [], solver.WallTime())
 
         placements = [
-            Placement(self.units[ui], s, r)
+            Placement(self.by_index[ui], s, r)
             for (ui, s, r), v in self.x.items()
             if solver.Value(v)
         ]

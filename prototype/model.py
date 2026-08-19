@@ -92,6 +92,7 @@ class Teacher:
     name: str
     max_per_week: int = 99
     max_per_day: int = 99          # 硬上限；「希望一天不超過幾節」用 soft constraint 表達
+    role: str = "homeroom"         # "homeroom" 導師 | "special" 科任 | "admin" 兼行政
 
 
 @dataclass
@@ -126,6 +127,12 @@ class Constraint:
       SUBJECT_SPREAD        同科目一天最多幾節（分散） params: {subject, max}
       SUBJECT_NOT_IN        某科不排在某些節次         params: {subject, periods}
       CORE_IN_MORNING       主科盡量排上午             params: {}
+      RESERVE_MORNING       本階段課程少佔各班上午     params: {max_per_class}
+      SPECIAL_BALANCE       各班每天的本階段課程節數   params: {max_per_day}
+      HOMEROOM_DAY_CAPACITY 每班每天留給導師的空格數   params: {}
+                            不得超過導師的日上限（分階段排課的可行性前提）
+      HOMEROOM_DAY_OFF      導師想休的那天，該班要被   params: {}
+                            科任課填滿（否則導師必須來上課）
     hardness: "hard" | "soft"
     """
 
@@ -137,6 +144,15 @@ class Constraint:
     @property
     def is_hard(self) -> bool:
         return self.hardness == "hard"
+
+
+# 這幾種約束描述的是「本階段課程佔用了什麼、留下了什麼」，只有在分階段排課的
+# Phase 1（self.units 是科任／行政的真子集）才有意義。全校一次求解時 self.units
+# 包含導師的課，套用它們會把導師自己的課也算成「佔用」，必須排除。
+HANDOFF_KINDS = frozenset({
+    "HOMEROOM_DAY_CAPACITY", "HOMEROOM_DAY_OFF",
+    "RESERVE_MORNING", "SPECIAL_BALANCE",
+})
 
 
 @dataclass
@@ -181,6 +197,29 @@ class School:
                     )
                 )
         return units
+
+    def homeroom_teacher_of(self, class_id: str) -> Teacher | None:
+        """該班的導師 —— 帶這個班、且身分為 homeroom 的教師。"""
+        for r in self.requirements:
+            t = self.teachers.get(r.teacher_id)
+            if r.class_id == class_id and t and t.role == "homeroom":
+                return t
+        return None
+
+    def teachable_slots(self, class_id: str, day: int) -> list[int]:
+        """該班某天真正要上課的時段（扣掉不上課的節次）。"""
+        blocked = set(self.classes[class_id].blocked)
+        return [s for s in self.grid.slots_of_day(day) if s not in blocked]
+
+    def hard_day_cap(self, teacher_id: str) -> int:
+        """教師的日節數硬上限，含 Teacher.max_per_day 與硬性的 TEACHER_MAX_PER_DAY。"""
+        caps = [self.teachers[teacher_id].max_per_day]
+        caps += [
+            c.params["max"] for c in self.constraints
+            if c.kind == "TEACHER_MAX_PER_DAY" and c.is_hard
+            and c.params.get("teacher") == teacher_id
+        ]
+        return min(caps)
 
     def rooms_of_type(self, room_type: str) -> list[str]:
         return [r.id for r in self.rooms.values() if r.type == room_type]

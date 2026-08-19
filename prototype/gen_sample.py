@@ -67,19 +67,24 @@ def build() -> dict:
     classes, teachers, requirements = [], [], []
 
     # 科任教師
+    # role: special = 科任跑班, admin = 兼行政（減課且有固定行政時段）
+    sp = lambda i, n, w, d: {"id": i, "name": n, "max_per_week": w, "max_per_day": d,
+                             "role": "special"}
+    ad = lambda i, n, w, d: {"id": i, "name": n, "max_per_week": w, "max_per_day": d,
+                             "role": "admin"}
     specials = {
-        "MU": [{"id": "S_MU", "name": "音樂老師", "max_per_week": 20, "max_per_day": 5}],
-        "AR": [{"id": "S_AR", "name": "美勞老師", "max_per_week": 20, "max_per_day": 5}],
-        "CO": [{"id": "S_CO", "name": "電腦老師", "max_per_week": 20, "max_per_day": 5}],
-        "PE": [{"id": "S_PE", "name": "體育老師", "max_per_week": 26, "max_per_day": 6}],
-        "SC": [{"id": "S_SC", "name": "自然老師", "max_per_week": 26, "max_per_day": 6}],
-        "EN": [{"id": "S_EN1", "name": "英語老師甲", "max_per_week": 20, "max_per_day": 5},
-               {"id": "S_EN2", "name": "英語老師乙", "max_per_week": 20, "max_per_day": 5}],
+        "MU": [sp("S_MU", "音樂老師", 20, 5)],
+        # 美勞與電腦各由一位科任與一位兼行政的主任分擔
+        "AR": [sp("S_AR", "美勞老師", 20, 5), ad("A_STU", "學務主任", 10, 3)],
+        "CO": [sp("S_CO", "電腦老師", 20, 5), ad("A_ACA", "教務主任", 10, 3)],
+        "PE": [sp("S_PE", "體育老師", 26, 6)],
+        "SC": [sp("S_SC", "自然老師", 26, 6)],
+        "EN": [sp("S_EN1", "英語老師甲", 20, 5), sp("S_EN2", "英語老師乙", 20, 5)],
     }
     for group in specials.values():
         teachers.extend(group)
 
-    en_rr = 0
+    rr = {k: 0 for k in specials}
     for grade in range(1, 7):
         for seq in (1, 2):
             cid = f"{grade}0{seq}"
@@ -93,6 +98,7 @@ def build() -> dict:
             tid = f"HR_{cid}"
             teachers.append({
                 "id": tid, "name": f"{cid} 導師", "max_per_week": 24, "max_per_day": 6,
+                "role": "homeroom",
             })
 
             bnd = band(grade)
@@ -102,17 +108,25 @@ def build() -> dict:
                     "teacher_id": tid, "doubles": doubles,
                 })
             for sid, periods in SPECIAL_PLAN[bnd]:
-                if sid == "EN":
-                    teacher_id = specials["EN"][en_rr % 2]["id"]
-                    en_rr += 1
-                else:
-                    teacher_id = specials[sid][0]["id"]
+                pool = specials[sid]
+                teacher_id = pool[rr[sid] % len(pool)]["id"]
+                rr[sid] += 1
                 requirements.append({
                     "class_id": cid, "subject_id": sid, "periods": periods,
                     "teacher_id": teacher_id, "doubles": 0,
                 })
 
     constraints = [
+        # ---- 兼行政教師的固定行政時段（物理事實，設為硬約束）----
+        {"kind": "TEACHER_UNAVAILABLE", "params": {"teacher": "A_ACA", "days": [1], "periods": [1, 2]},
+         "hardness": "hard"},
+        {"kind": "TEACHER_UNAVAILABLE", "params": {"teacher": "A_STU", "days": [1], "periods": [1, 2]},
+         "hardness": "hard"},
+        # ---- 交接品質：Phase 1 要為導師留下好用的空格 ----
+        {"kind": "HOMEROOM_DAY_CAPACITY", "params": {}, "hardness": "soft"},
+        {"kind": "HOMEROOM_DAY_OFF", "params": {}, "hardness": "soft"},
+        {"kind": "RESERVE_MORNING", "params": {"max_per_class": 4}, "hardness": "soft"},
+        {"kind": "SPECIAL_BALANCE", "params": {"max_per_day": 3}, "hardness": "soft"},
         # ---- 老師的個別需求 ----
         {"kind": "TEACHER_DAY_OFF", "params": {"teacher": "S_EN1", "day": 3},
          "hardness": "soft", "weight": 200},
