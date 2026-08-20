@@ -58,6 +58,7 @@ python3 compare_handoff.py                   # 交接品質對照實驗
 | `prototype/phased.py` | 分階段排課與交接品質評估 |
 | `prototype/compare_handoff.py` | 交接品質對照實驗 |
 | `prototype/render.py` | 班級／教師／教室三視角輸出與驗證 |
+| `prototype/apply_teachers.py` | 把網站匯出的 teachers.json 套回學校資料 |
 | `prototype/gen_sample.py` | 產生範例學校資料 |
 | `prototype/run.py` | CLI 進入點 |
 | `prototype/data/sample_school.json` | 範例資料（全部設定皆為資料驅動） |
@@ -71,19 +72,36 @@ python3 compare_handoff.py                   # 交接品質對照實驗
 之後每次推送 `docs/` 都會自動更新。
 
 > GitHub Pages 只能放靜態檔案，**排課求解（CP-SAT）跑不起來**。
-> 網站上的課表是 `prototype/` 事先算好的結果，可以檢視、可以手動調整並即時檢核，
-> 但改了配課沒辦法重新求解。要能真的重排，需要後端 API 或把求解器搬進瀏覽器。
+> 網站上的課表是 `prototype/` 事先算好的結果。老師設定可以編輯並匯出 JSON，
+> 帶回本機重新求解（見下方流程）。要在網站上直接重排，需要後端 API。
 
 ## 畫面原型
 
 `ui/index.html` 是可互動的畫面原型，五個步驟對應實際作業流程，
 資料全部來自 `prototype/` 的實際求解結果（由 `prototype/export_ui.py` 匯出）：
 
-1. **配課與鐘點** — 教師配課表、鐘點佔比、可行性檢查
-2. **科任／行政排課** — Phase 1 結果，可依教師或專科教室檢視
-3. **交接檢查** — 各班留給導師的空格，含「有／沒有為導師著想」的對照
-4. **導師自排** — 點一堂導師的課，可放的位置會亮起來，即時檢核
-5. **課表檢視** — 班級／教師／教室三視角，硬約束即時驗證
+1. **老師設定** — 建立老師、身分、鐘點上限，以及每個人的個人需求（可編輯、可匯出）
+2. **配課與鐘點** — 教師配課表、鐘點佔比、可行性檢查
+3. **科任／行政排課** — Phase 1 結果，可依教師或專科教室檢視
+4. **交接檢查** — 各班留給導師的空格，含「有／沒有為導師著想」的對照
+5. **導師自排** — 點一堂導師的課，可放的位置會亮起來，即時檢核
+6. **課表檢視** — 班級／教師／教室三視角，硬約束即時驗證
+
+### 在網站上改設定，然後重新排課
+
+網站是靜態的，跑不了求解器，但可以編輯資料再帶回本機求解：
+
+```
+網站「老師設定」改完 → 匯出 JSON
+      ↓
+python3 prototype/apply_teachers.py ~/Downloads/teachers.json
+python3 prototype/run.py --phased
+      ↓
+python3 prototype/export_ui.py && python3 ui/build_site.py   # 把新結果放回網站
+```
+
+老師設定的修改存在瀏覽器的 localStorage，換裝置不會跟著走，
+要保留請用「匯出 JSON」。
 
 ```bash
 cd prototype && python3 export_ui.py    # 重新求解並匯出畫面用資料

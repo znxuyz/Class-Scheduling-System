@@ -84,7 +84,8 @@ main{padding:26px 0 64px}
 /* 沒有這行，內層課表的 overflow-x 關不住，整頁會跟著橫向捲動 */
 .cols>*{min-width:0}
 .card,.card-b{min-width:0}
-@media(max-width:900px){.cols{grid-template-columns:1fr}}
+.cols.wide{grid-template-columns:300px 1fr}
+@media(max-width:900px){.cols,.cols.wide{grid-template-columns:1fr}}
 .card{background:var(--surface); border:1px solid var(--line); border-radius:var(--r); box-shadow:var(--shadow)}
 .card-h{padding:12px 15px; border-bottom:1px solid var(--line); display:flex;
   align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap}
@@ -177,6 +178,55 @@ button.btn.on{background:var(--accent); border-color:var(--accent); color:#fff}
   font-family:"IBM Plex Mono",monospace; font-size:11px; border:1px solid var(--line-2); background:var(--surface-2)}
 .daybox.over{background:var(--bad-bg); border-color:var(--bad); color:var(--bad); font-weight:600}
 .daybox.zero{color:var(--ink-3); opacity:.5}
+
+/* ---------- 資料輸入 ---------- */
+.t-row{
+  display:flex; align-items:center; gap:8px; width:100%; text-align:left;
+  padding:9px 14px; background:none; border:0; border-bottom:1px solid var(--line);
+  border-left:2px solid transparent; cursor:pointer; font-family:inherit;
+  font-size:13px; color:var(--ink);
+}
+.t-row:hover{background:var(--surface-2)}
+.t-row.on{background:var(--accent-soft); border-left-color:var(--accent)}
+.t-row:focus-visible{outline:2px solid var(--accent); outline-offset:-2px}
+.t-name{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.t-num{font-size:11.5px; color:var(--ink-3)}
+.t-num.over{color:var(--bad); font-weight:600}
+.t-flag{color:var(--bad); font-weight:700; flex:none}
+.form-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:16px}
+.fld{display:flex; flex-direction:column; gap:5px; min-width:0}
+.fld .eyebrow{margin-bottom:1px}
+.hint{font-size:11.5px; color:var(--ink-3); line-height:1.5}
+.in{
+  font-family:inherit; font-size:13.5px; color:var(--ink); background:var(--surface);
+  border:1px solid var(--line-2); border-radius:5px; padding:6px 9px; width:100%;
+}
+.in:focus-visible{outline:2px solid var(--accent); outline-offset:-1px; border-color:var(--accent)}
+.in.w{width:72px; font-family:"IBM Plex Mono",monospace; text-align:right; flex:none}
+.chip-row{display:flex; gap:6px; flex-wrap:wrap; margin-top:7px}
+.chip-tog{
+  appearance:none; font-family:inherit; font-size:12px; padding:3px 10px; cursor:pointer;
+  border-radius:99px; border:1px solid var(--line-2); background:var(--surface-2); color:var(--ink-2);
+}
+.chip-tog:hover{border-color:var(--accent); color:var(--accent)}
+.chip-tog.on{background:var(--accent); border-color:var(--accent); color:#fff}
+:root[data-theme="dark"] .chip-tog.on{color:#0E1413}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .chip-tog.on{color:#0E1413}}
+.chip-tog:focus-visible{outline:2px solid var(--accent); outline-offset:1px}
+.c-row{
+  display:flex; align-items:center; gap:9px; flex-wrap:wrap;
+  padding:9px 12px; border:1px solid var(--line); border-radius:6px; background:var(--surface-2);
+}
+.c-txt{flex:1; min-width:170px; font-size:13px}
+.btn.x{padding:4px 9px; color:var(--ink-3); flex:none}
+.btn.x:hover{border-color:var(--bad); color:var(--bad)}
+.add-c{
+  display:flex; align-items:center; gap:9px; flex-wrap:wrap; margin-top:12px;
+  padding:12px; border:1px dashed var(--line-2); border-radius:6px;
+}
+.p-row{display:flex; align-items:center; gap:9px; flex-wrap:wrap}
+.pick{display:flex; align-items:center; gap:5px; flex-wrap:wrap}
+.pick-l{font-size:11.5px; color:var(--ink-3)}
 @media(prefers-reduced-motion:reduce){*{transition:none!important; animation:none!important}}
 </style>
 
@@ -193,7 +243,8 @@ button.btn.on{background:var(--accent); border-color:var(--accent); color:#fff}
 <nav><div class="wrap"><div class="steps" role="tablist" id="steps"></div></div></nav>
 
 <main class="wrap">
- <section class="panel" id="p-load" role="tabpanel"></section>
+ <section class="panel" id="p-teachers" role="tabpanel"></section>
+ <section class="panel" id="p-load" role="tabpanel" hidden></section>
  <section class="panel" id="p-phase1" role="tabpanel" hidden></section>
  <section class="panel" id="p-handoff" role="tabpanel" hidden></section>
  <section class="panel" id="p-phase2" role="tabpanel" hidden></section>
@@ -267,7 +318,7 @@ function renderLoad(){
     D.feasibility.length ? '✗ '+D.feasibility.join('<br>✗ ')
     : '<b>全部通過</b><br>班級容量、教師鐘點、教師日上限總量、專科教室容量，皆在可排範圍內。'));
   const counts = {homeroom:0,special:0,admin:0};
-  D.loads.forEach(l=>counts[l.role]++);
+  TROWS().forEach(l=>counts[l.role]++);
   const box = el('div'); box.style.marginTop='13px';
   box.innerHTML = `<div class="eyebrow" style="margin-bottom:7px">教師編制</div>
     <div class="kv"><span>導師（包班）</span><b>${counts.homeroom}</b></div>
@@ -295,7 +346,7 @@ function renderLoad(){
     t.innerHTML = '<thead><tr><th>教師</th><th>身分</th><th>任教</th><th>班級數</th>'
       + '<th style="text-align:right">週節數</th><th style="width:120px">佔週上限</th><th>日上限</th></tr></thead>';
     const tb = el('tbody');
-    D.loads.filter(l=>filter==='all'||l.role===filter)
+    TROWS().filter(l=>filter==='all'||l.role===filter)
       .sort((a,b)=>b.total-a.total).forEach(l=>{
       const pct = Math.min(100, l.total/l.max*100);
       const cls = pct>100?'bad':(pct>90?'warn':'');
@@ -351,7 +402,7 @@ function renderPhase1(){
   });
   const sel = el('select');
   const opts = p1Mode==='teacher'
-    ? D.loads.filter(l=>l.role!=='homeroom').map(l=>[l.id,l.name+'（'+ROLE_TXT[l.role]+'）'])
+    ? TROWS().filter(l=>l.role!=='homeroom').map(l=>[l.id,l.name+'（'+ROLE_TXT[l.role]+'）'])
     : Object.entries(D.rooms).filter(([,r])=>r.type!=='homeroom').map(([id,r])=>[id,r.name]);
   if(!p1Key) p1Key = opts[0][0];
   opts.forEach(([id,name])=>{ const o=el('option',null,name); o.value=id; if(id===p1Key)o.selected=true; sel.appendChild(o); });
@@ -630,7 +681,7 @@ function renderView(){
   });
   const sel = el('select');
   const opts = vMode==='class' ? Object.entries(D.classes).map(([i,c])=>[i,c.name])
-    : vMode==='teacher' ? D.loads.map(l=>[l.id, l.name])
+    : vMode==='teacher' ? TROWS().map(l=>[l.id, l.name])
     : Object.entries(D.rooms).map(([i,r])=>[i,r.name]);
   if(!vKey) vKey = opts[0][0];
   opts.forEach(([id,n])=>{ const o=el('option',null,n); o.value=id; if(id===vKey)o.selected=true; sel.appendChild(o); });
@@ -682,8 +733,326 @@ function countShort(all){
   return D.requirements.filter(r=>(got[r.c+'|'+r.s]||0)!==r.n).length;
 }
 
+/* ============ 步驟 1 老師設定 ============
+   系統真正的起點。老師的身分、鐘點上限與「個人需求」都在這裡輸入 ——
+   個人需求用統一的 Constraint 結構表達（kind + params + 硬/軟 + 權重），
+   新增一種需求不必改資料結構，這也是後端求解器直接吃的格式。
+   改動存在瀏覽器的 localStorage，可以匯出成 prototype/ 能讀的 JSON。      */
+
+const CK = {
+  TEACHER_DAY_OFF:      {label:'某天完全不排課',   fields:['day'],           w:100},
+  TEACHER_UNAVAILABLE:  {label:'特定時段不能排課', fields:['days','periods'],w:100},
+  TEACHER_MAX_PER_DAY:  {label:'一天最多幾節',     fields:['max'],           w:40},
+  TEACHER_MAX_RUN:      {label:'最多連續幾節',     fields:['max'],           w:20},
+  TEACHER_COMPACT:      {label:'課表不要有空堂',   fields:[],                w:5},
+};
+const LS_KEY = 'scheduling.teachers.v1';
+
+let TS = null, tSel = null;
+
+function loadTS(){
+  try{ const raw = localStorage.getItem(LS_KEY); if(raw) return JSON.parse(raw); }catch(e){}
+  return {
+    teachers: D.loads.map(l=>({
+      id:l.id, name:l.name, role:l.role, max:l.max, cap:l.cap,
+      subjects:l.subjects.slice(), classes:l.classes.slice(),
+    })),
+    constraints: D.constraints
+      .filter(c=>c.params && c.params.teacher)
+      .map(c=>({kind:c.kind, params:JSON.parse(JSON.stringify(c.params)),
+                hard:c.hard, weight:c.weight})),
+  };
+}
+function saveTS(){ syncD(); try{ localStorage.setItem(LS_KEY, JSON.stringify(TS)); }catch(e){} }
+function resetTS(){ try{ localStorage.removeItem(LS_KEY); }catch(e){} TS=loadTS(); tSel=null; renderTeachers(); }
+
+/* 配課節數取自實際配課（requirements），上限則來自這裡的設定 */
+function assignedPeriods(tid){
+  return D.requirements.filter(r=>r.t===tid).reduce((n,r)=>n+r.n,0);
+}
+function teacherIssues(t){
+  const out=[], total=assignedPeriods(t.id);
+  if(!t.name.trim()) out.push('姓名不可空白');
+  if(total > t.max) out.push(`配課 ${total} 節，超過週上限 ${t.max} 節`);
+  const days = G.days;
+  const dayOffs = TS.constraints.filter(c=>
+    c.params.teacher===t.id && c.hard &&
+    (c.kind==='TEACHER_DAY_OFF' || (c.kind==='TEACHER_UNAVAILABLE' && !c.params.periods))).length;
+  const capC = TS.constraints.filter(c=>
+    c.params.teacher===t.id && c.hard && c.kind==='TEACHER_MAX_PER_DAY').map(c=>c.params.max);
+  const cap = Math.min(t.cap, ...(capC.length?capC:[99]));
+  const freeDays = days - dayOffs;
+  if(cap < G.periods && total > cap*freeDays)
+    out.push(`配課 ${total} 節，但一天最多 ${cap} 節 × ${freeDays} 個可上課日 = ${cap*freeDays} 節`);
+  return out;
+}
+
+function renderTeachers(){
+  if(!TS) TS = loadTS();
+  const p = document.getElementById('p-teachers'); p.innerHTML='';
+  p.appendChild(el('p','lede','系統的起點。先建立老師、設定<strong>身分與鐘點上限</strong>，'
+    +'再登記每個人的<strong>個人需求</strong> —— 哪幾天不排課、一天不超過幾節、不要連上太多節。'
+    +'<br>需求分「硬性」與「軟性」：硬性一定不違反，軟性排不下時可以犧牲、按權重決定先犧牲誰。'
+    +'除了法規與人不在場之類的事實，<strong>建議一律設成軟性</strong>，否則需求一打架就只會得到「無解」。'));
+
+  const cols = el('div','cols wide');
+
+  /* ---- 左：老師清單 ---- */
+  const side = el('div','card');
+  const sh = el('div','card-h','<h3>老師</h3>');
+  const add = el('button','btn','＋ 新增');
+  add.onclick=()=>{
+    let n=1; while(TS.teachers.some(t=>t.id==='T_NEW'+n)) n++;
+    TS.teachers.push({id:'T_NEW'+n, name:'新老師 '+n, role:'special',
+                      max:20, cap:5, subjects:[], classes:[]});
+    tSel = TS.teachers.length-1; saveTS(); renderTeachers();
+  };
+  sh.appendChild(add); side.appendChild(sh);
+  const list = el('div'); list.style.cssText='max-height:620px;overflow-y:auto';
+  if(tSel==null) tSel = 0;
+  TS.teachers.forEach((t,i)=>{
+    const total = assignedPeriods(t.id), bad = teacherIssues(t).length;
+    const row = el('button','t-row'+(i===tSel?' on':''));
+    row.type='button';
+    row.innerHTML = `<span class="t-name">${t.name || '（未命名）'}</span>
+      <span class="chip ${t.role}">${ROLE_TXT[t.role]}</span>
+      <span class="mono t-num${total>t.max?' over':''}">${total}/${t.max}</span>
+      ${bad?'<span class="t-flag" title="設定有問題">!</span>':''}`;
+    row.onclick=()=>{ tSel=i; renderTeachers(); };
+    list.appendChild(row);
+  });
+  side.appendChild(list);
+  const sf = el('div','card-b'); sf.style.borderTop='1px solid var(--line)';
+  const bar = el('div'); bar.style.cssText='display:flex;gap:7px;flex-wrap:wrap';
+  const exp = el('button','btn','匯出 JSON');
+  exp.onclick=exportTeachers;
+  const imp = el('button','btn','匯入 JSON');
+  const file = el('input'); file.type='file'; file.accept='.json'; file.style.display='none';
+  file.onchange=e=>{ const f=e.target.files[0]; if(!f) return;
+    const r=new FileReader(); r.onload=()=>{ try{
+      const j=JSON.parse(r.result);
+      if(!Array.isArray(j.teachers)) throw new Error('缺少 teachers 陣列');
+      TS=j; tSel=0; saveTS(); renderTeachers();
+    }catch(err){ alert('讀不進來：'+err.message); } };
+    r.readAsText(f,'utf-8'); };
+  imp.onclick=()=>file.click();
+  const rst = el('button','btn','回復預設');
+  rst.onclick=()=>{ if(confirm('會清掉這台裝置上的所有修改，確定？')) resetTS(); };
+  bar.appendChild(exp); bar.appendChild(imp); bar.appendChild(rst); bar.appendChild(file);
+  sf.appendChild(bar);
+  sf.appendChild(el('div','note info','修改只存在這台瀏覽器。要重新排課，請匯出 JSON 後餵給 <span class="mono">prototype/</span> 的求解器。'));
+  sf.lastChild.style.marginTop='11px';
+  side.appendChild(sf); cols.appendChild(side);
+
+  /* ---- 右：單一老師的設定 ---- */
+  const t = TS.teachers[tSel];
+  const main = el('div','card');
+  if(!t){ main.appendChild(el('div','card-b','請先新增一位老師。')); cols.appendChild(main); p.appendChild(cols); return; }
+
+  const mh = el('div','card-h',`<h3>${t.name || '（未命名）'}</h3>`);
+  const del = el('button','btn','刪除這位老師');
+  del.onclick=()=>{ if(!confirm(`刪除「${t.name}」？`)) return;
+    TS.constraints = TS.constraints.filter(c=>c.params.teacher!==t.id);
+    TS.teachers.splice(tSel,1); tSel=Math.max(0,tSel-1); saveTS(); renderTeachers(); };
+  mh.appendChild(del); main.appendChild(mh);
+
+  const mb = el('div','card-b');
+  const issues = teacherIssues(t);
+  if(issues.length){
+    issues.forEach(x=>{ const n=el('div','note bad','✗ '+x); n.style.marginBottom='9px'; mb.appendChild(n); });
+  }
+
+  /* 基本欄位 */
+  const grid1 = el('div','form-grid');
+  function field(label, node, hint){
+    const w = el('div','fld');
+    w.appendChild(el('label','eyebrow',label));
+    w.appendChild(node);
+    if(hint) w.appendChild(el('div','hint',hint));
+    return w;
+  }
+  const nameIn = el('input'); nameIn.type='text'; nameIn.value=t.name; nameIn.className='in';
+  nameIn.oninput=()=>{ t.name=nameIn.value; saveTS();
+    mh.querySelector('h3').textContent = t.name || '（未命名）';
+    const r=list.children[tSel]; if(r) r.querySelector('.t-name').textContent = t.name || '（未命名）'; };
+  grid1.appendChild(field('姓名', nameIn));
+
+  const roleSeg = el('div','seg');
+  [['homeroom','導師'],['special','科任'],['admin','兼行政']].forEach(([r,lbl])=>{
+    const b=el('button',null,lbl); b.type='button'; b.setAttribute('aria-pressed', t.role===r);
+    b.onclick=()=>{ t.role=r; saveTS(); renderTeachers(); }; roleSeg.appendChild(b);
+  });
+  grid1.appendChild(field('身分', roleSeg,
+    t.role==='homeroom' ? '導師包班、只教自己班，排課時安排在科任之後'
+    : t.role==='admin' ? '兼行政通常減課，且有固定的處室會議時段'
+    : '科任跨班跑，會搶專科教室，排課時最先安排'));
+
+  const maxIn = el('input'); maxIn.type='number'; maxIn.min='0'; maxIn.max='40';
+  maxIn.value=t.max; maxIn.className='in';
+  maxIn.oninput=()=>{ t.max=+maxIn.value||0; saveTS(); renderTeachers(); };
+  grid1.appendChild(field('每週節數上限', maxIn, `目前配課 ${assignedPeriods(t.id)} 節`));
+
+  const capIn = el('input'); capIn.type='number'; capIn.min='1'; capIn.max=String(G.periods);
+  capIn.value=t.cap; capIn.className='in';
+  capIn.oninput=()=>{ t.cap=+capIn.value||1; saveTS(); renderTeachers(); };
+  grid1.appendChild(field('每天節數上限（硬性）', capIn,
+    '這是絕對不會超過的天花板。「希望一天不超過幾節」請用下面的個人需求，設成軟性。'));
+  mb.appendChild(grid1);
+
+  /* 任教科目 */
+  const subBox = el('div'); subBox.style.marginTop='18px';
+  subBox.appendChild(el('div','eyebrow','任教科目'));
+  const subs = el('div','chip-row');
+  Object.entries(D.subjects).forEach(([sid,s])=>{
+    const on = t.subjects.includes(sid);
+    const b = el('button','chip-tog'+(on?' on':''), s.name); b.type='button';
+    b.onclick=()=>{ const i=t.subjects.indexOf(sid);
+      if(i<0) t.subjects.push(sid); else t.subjects.splice(i,1);
+      saveTS(); renderTeachers(); };
+    subs.appendChild(b);
+  });
+  subBox.appendChild(subs);
+  mb.appendChild(subBox);
+
+  /* 個人需求 */
+  const cBox = el('div'); cBox.style.marginTop='22px';
+  const ch = el('div'); ch.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap';
+  ch.appendChild(el('div','eyebrow','個人需求'));
+  cBox.appendChild(ch);
+
+  const mine = TS.constraints.map((c,i)=>({c,i})).filter(x=>x.c.params.teacher===t.id);
+  const cl = el('div'); cl.style.cssText='display:flex;flex-direction:column;gap:8px;margin-top:9px';
+  if(!mine.length) cl.appendChild(el('div','note info','這位老師目前沒有任何個人需求。'));
+  mine.forEach(({c,i})=>{
+    const row = el('div','c-row');
+    row.appendChild(el('div','c-txt', describeConstraint(c)));
+    const hs = el('div','seg');
+    [['soft','軟性'],['hard','硬性']].forEach(([h,lbl])=>{
+      const b=el('button',null,lbl); b.type='button';
+      b.setAttribute('aria-pressed', (h==='hard')===!!c.hard);
+      b.onclick=()=>{ c.hard=(h==='hard'); saveTS(); renderTeachers(); }; hs.appendChild(b);
+    });
+    row.appendChild(hs);
+    const wIn = el('input'); wIn.type='number'; wIn.min='1'; wIn.className='in w';
+    wIn.value = c.weight && c.weight!==1 ? c.weight : (CK[c.kind]?CK[c.kind].w:1);
+    wIn.title='權重：數字越大代表越不願意被犧牲';
+    wIn.disabled = !!c.hard;
+    wIn.oninput=()=>{ c.weight=+wIn.value||1; saveTS(); };
+    row.appendChild(wIn);
+    const x = el('button','btn x','✕'); x.type='button'; x.title='刪除這項需求';
+    x.onclick=()=>{ TS.constraints.splice(i,1); saveTS(); renderTeachers(); };
+    row.appendChild(x);
+    cl.appendChild(row);
+  });
+  cBox.appendChild(cl);
+
+  /* 新增需求 */
+  const addBox = el('div','add-c');
+  const kSel = el('select'); kSel.id='c-kind';
+  Object.entries(CK).forEach(([k,v])=>{ const o=el('option',null,v.label); o.value=k; kSel.appendChild(o); });
+  const params = el('div','p-row');
+  function drawParams(){
+    params.innerHTML='';
+    const f = CK[kSel.value].fields;
+    if(f.includes('day')){
+      const s=el('select'); s.id='p-day';
+      DAYS.forEach((d,i)=>{ const o=el('option',null,'週'+d); o.value=i+1; s.appendChild(o); });
+      params.appendChild(s);
+    }
+    if(f.includes('days')){
+      const g1=el('div','pick'); g1.appendChild(el('span','pick-l','星期'));
+      DAYS.forEach((d,i)=>{ const b=el('button','chip-tog',d); b.type='button'; b.dataset.day=i+1;
+        b.onclick=()=>b.classList.toggle('on'); g1.appendChild(b); });
+      params.appendChild(g1);
+    }
+    if(f.includes('periods')){
+      const g2=el('div','pick'); g2.appendChild(el('span','pick-l','節次'));
+      for(let i=1;i<=G.periods;i++){ const b=el('button','chip-tog',String(i)); b.type='button';
+        b.dataset.period=i; b.onclick=()=>b.classList.toggle('on'); g2.appendChild(b); }
+      params.appendChild(g2);
+    }
+    if(f.includes('max')){
+      const n=el('input'); n.type='number'; n.min='1'; n.max=String(G.periods);
+      n.value = kSel.value==='TEACHER_MAX_RUN' ? 3 : 4; n.className='in w'; n.id='p-max';
+      params.appendChild(el('span','pick-l','節數'));
+      params.appendChild(n);
+    }
+  }
+  kSel.onchange=drawParams; drawParams();
+  const addC = el('button','btn on','新增需求');
+  addC.type='button';
+  addC.onclick=()=>{
+    const kind=kSel.value, f=CK[kind].fields, ps={teacher:t.id};
+    if(f.includes('day')) ps.day = +params.querySelector('#p-day').value;
+    if(f.includes('days')){
+      const d=[...params.querySelectorAll('[data-day].on')].map(b=>+b.dataset.day);
+      if(!d.length){ alert('請至少選一個星期'); return; } ps.days=d;
+    }
+    if(f.includes('periods')){
+      const q=[...params.querySelectorAll('[data-period].on')].map(b=>+b.dataset.period);
+      if(!q.length){ alert('請至少選一個節次'); return; } ps.periods=q;
+    }
+    if(f.includes('max')) ps.max = +params.querySelector('#p-max').value||1;
+    TS.constraints.push({kind, params:ps, hard:false, weight:CK[kind].w});
+    saveTS(); renderTeachers();
+  };
+  addBox.appendChild(kSel); addBox.appendChild(params); addBox.appendChild(addC);
+  cBox.appendChild(addBox);
+  mb.appendChild(cBox);
+
+  main.appendChild(mb); cols.appendChild(main); p.appendChild(cols);
+}
+
+function describeConstraint(c){
+  const p = c.params;
+  switch(c.kind){
+    case 'TEACHER_DAY_OFF':     return `週${DAYS[p.day-1]}完全不排課`;
+    case 'TEACHER_UNAVAILABLE': return `週${(p.days||[]).map(d=>DAYS[d-1]).join('、')} 的 `
+                                     + `第 ${(p.periods||[]).join('、')} 節不排課`;
+    case 'TEACHER_MAX_PER_DAY': return `一天最多 ${p.max} 節`;
+    case 'TEACHER_MAX_RUN':     return `最多連續 ${p.max} 節`;
+    case 'TEACHER_COMPACT':     return '課表不要有零星空堂';
+    default: return c.kind;
+  }
+}
+
+function exportTeachers(){
+  const out = {
+    teachers: TS.teachers.map(t=>({
+      id:t.id, name:t.name, role:t.role,
+      max_per_week:t.max, max_per_day:t.cap,
+    })),
+    constraints: TS.constraints.map(c=>({
+      kind:c.kind, params:c.params,
+      hardness: c.hard ? 'hard' : 'soft',
+      weight: c.weight || 1,
+    })),
+  };
+  const blob = new Blob([JSON.stringify(out,null,2)], {type:'application/json'});
+  const a = el('a'); a.href=URL.createObjectURL(blob);
+  a.download='teachers.json'; document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 0);
+}
+
+/* 老師設定的修改要讓後續畫面都看得到，所以同步回共用的資料表 */
+function syncD(){
+  TS.teachers.forEach(t=>{
+    D.teachers[t.id] = Object.assign(D.teachers[t.id] || {}, 
+      {name:t.name, role:t.role, max:t.max, cap:t.cap});
+  });
+}
+function TROWS(){
+  if(!TS) TS = loadTS();
+  return TS.teachers.map(t=>({
+    id:t.id, name:t.name, role:t.role, max:t.max, cap:t.cap,
+    subjects:t.subjects, total:assignedPeriods(t.id),
+    classes:[...new Set(D.requirements.filter(r=>r.t===t.id).map(r=>r.c))],
+  }));
+}
+
 /* ============ 導覽 ============ */
 const STEPS = [
+  ['p-teachers','老師設定', renderTeachers],
   ['p-load','配課與鐘點', renderLoad],
   ['p-phase1','科任／行政排課', renderPhase1],
   ['p-handoff','交接檢查', renderHandoff],
@@ -708,7 +1077,7 @@ function go(i){
   window.scrollTo({top:0, behavior:'instant'});
 }
 document.getElementById('stats').innerHTML = [
-  [Object.keys(D.classes).length,'班級'], [D.loads.length,'教師'],
+  [Object.keys(D.classes).length,'班級'], [TROWS().length,'教師'],
   [Object.keys(D.rooms).length,'教室'], [D.placements.length,'排定單元'],
   [countClashes(allPlacements()).c + countClashes(allPlacements()).t + countClashes(allPlacements()).r, '硬衝突'],
 ].map(([n,l])=>`<div class="stat"><b>${n}</b><span>${l}</span></div>`).join('');
