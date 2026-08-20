@@ -62,6 +62,8 @@ python3 compare_handoff.py                   # 交接品質對照實驗
 | `prototype/gen_sample.py` | 產生範例學校資料 |
 | `prototype/run.py` | CLI 進入點 |
 | `prototype/data/sample_school.json` | 範例資料（全部設定皆為資料驅動） |
+| `ui/index.html` | 畫面原型，含瀏覽器端排課引擎 |
+| `ui/build_site.py` | 產生 GitHub Pages 用的完整網頁 |
 
 ## 線上操作（GitHub Pages）
 
@@ -71,9 +73,9 @@ python3 compare_handoff.py                   # 交接品質對照實驗
 分支選 `claude/elementary-school-scheduling-38pupq`、資料夾選 **`/docs`**，按 Save。
 之後每次推送 `docs/` 都會自動更新。
 
-> GitHub Pages 只能放靜態檔案，**排課求解（CP-SAT）跑不起來**。
-> 網站上的課表是 `prototype/` 事先算好的結果。老師設定可以編輯並匯出 JSON，
-> 帶回本機重新求解（見下方流程）。要在網站上直接重排，需要後端 API。
+**排課求解直接在瀏覽器裡跑**，不需要後端、不需要帳號、不需要資料庫。
+按右上角「重新排課」約 10 秒完成，過程中畫面不會凍住，隨時可以停 ——
+停下來拿到的也是一份合法課表，因為三大衝堂全程都是不變量。
 
 ## 畫面原型
 
@@ -87,17 +89,25 @@ python3 compare_handoff.py                   # 交接品質對照實驗
 5. **導師自排** — 點一堂導師的課，可放的位置會亮起來，即時檢核
 6. **課表檢視** — 班級／教師／教室三視角，硬約束即時驗證
 
-### 在網站上改設定，然後重新排課
+### 兩套求解器，同一個模型
 
-網站是靜態的，跑不了求解器，但可以編輯資料再帶回本機求解：
+| | `prototype/`（Python） | 網站（JavaScript） |
+|---|---|---|
+| 演算法 | CP-SAT，可證明最佳性 | 貪婪初始解 + 模擬退火 |
+| 執行環境 | 本機 | 瀏覽器，零後端 |
+| 12 班實測成本 | **8** | **8 ~ 12**（約 10 秒） |
+| 硬約束 | 0 件 | 0 件 |
+
+硬約束（三大不衝堂、節數守恆、連堂完整性、教室型態、教師日上限）在 JS 版
+是**全程維持的不變量** —— 只在合法位置之間移動與對調，所以任何時刻中止，
+拿到的都是一份可用的課表，只是軟性需求還沒壓到最低。
+
+要用 Python 版求解（規模更大、或想要最佳性保證）：
 
 ```
-網站「老師設定」改完 → 下載 JSON（或用「複製 JSON」貼成檔案）
-      ↓
+網站「老師設定」→ 下載 JSON
 python3 prototype/apply_teachers.py ~/Downloads/teachers.json
 python3 prototype/run.py --phased
-      ↓
-python3 prototype/export_ui.py && python3 ui/build_site.py   # 把新結果放回網站
 ```
 
 老師設定的修改存在瀏覽器的 localStorage，換裝置不會跟著走，

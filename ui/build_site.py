@@ -36,7 +36,6 @@ TOGGLE_CSS = '''
 }
 .theme-btn:hover{border-color:var(--accent); color:var(--accent)}
 .theme-btn:focus-visible{outline:2px solid var(--accent); outline-offset:1px}
-.head-right{display:flex; align-items:center; gap:16px; flex-wrap:wrap}
 '''
 
 TOGGLE_JS = '''
@@ -64,13 +63,10 @@ def build() -> None:
     src = src.replace("@media(prefers-reduced-motion:reduce)",
                       TOGGLE_CSS + "@media(prefers-reduced-motion:reduce)", 1)
 
-    # 2. 把統計數字與切換鈕包成同一組，放在標題列右側
-    src = src.replace(
-        '  <div class="stats" id="stats"></div>\n',
-        f'  <div class="head-right">\n   <div class="stats" id="stats"></div>\n   {TOGGLE_HTML}\n  </div>\n',
-        1,
-    )
-    assert "head-right" in src, "找不到標題列，無法插入主題切換鈕"
+    # 2. 主題切換鈕插進標題列既有的右側容器
+    anchor = '<button class="btn solve" id="solve-btn" type="button">重新排課</button>'
+    assert anchor in src, "找不到標題列的排課按鈕，無法插入主題切換鈕"
+    src = src.replace(anchor, anchor + "\n   " + TOGGLE_HTML, 1)
 
     # 3. 主題切換的行為接在最後一段 script 尾端（此時 DOM 已建好）
     idx = src.rfind("</script>")

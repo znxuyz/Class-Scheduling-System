@@ -242,6 +242,24 @@ button.btn.on{background:var(--accent); border-color:var(--accent); color:#fff}
 .pick{display:flex; align-items:center; gap:5px; flex-wrap:wrap}
 .pick-l{font-size:11.5px; color:var(--ink-3)}
 
+/* ---------- 線上排課 ---------- */
+.head-right{display:flex; align-items:center; gap:16px; flex-wrap:wrap}
+.btn.solve{
+  background:var(--accent); border-color:var(--accent); color:#fff;
+  font-size:13.5px; padding:7px 15px; font-weight:500;
+}
+:root[data-theme="dark"] .btn.solve{color:#0E1413}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn.solve{color:#0E1413}}
+.btn.solve:hover{filter:brightness(1.08); color:#fff; border-color:var(--accent)}
+:root[data-theme="dark"] .btn.solve:hover{color:#0E1413}
+.btn.solve:disabled{opacity:.55; cursor:default; filter:none}
+#solve-bar{padding:10px 0 2px}
+.sb-row{display:flex; align-items:center; gap:13px; flex-wrap:wrap}
+.sb-phase{font-size:12.5px; color:var(--ink-2); min-width:160px}
+.sb-track{flex:1; min-width:130px; height:5px; background:var(--sunken); border-radius:3px; overflow:hidden}
+.sb-track i{display:block; height:100%; width:0; background:var(--accent); border-radius:3px}
+.sb-cost{font-size:12px; color:var(--ink-3); font-variant-numeric:tabular-nums}
+
 /* 獨立網頁自己的主題切換（Artifact 版本由外殼提供，不需要這個） */
 .theme-btn{
   appearance:none; background:var(--surface); color:var(--ink-2);
@@ -250,7 +268,6 @@ button.btn.on{background:var(--accent); border-color:var(--accent); color:#fff}
 }
 .theme-btn:hover{border-color:var(--accent); color:var(--accent)}
 .theme-btn:focus-visible{outline:2px solid var(--accent); outline-offset:1px}
-.head-right{display:flex; align-items:center; gap:16px; flex-wrap:wrap}
 @media(prefers-reduced-motion:reduce){*{transition:none!important; animation:none!important}}
 </style>
 
@@ -262,6 +279,7 @@ button.btn.on{background:var(--accent); border-color:var(--accent); color:#fff}
   </div>
   <div class="head-right">
    <div class="stats" id="stats"></div>
+   <button class="btn solve" id="solve-btn" type="button">重新排課</button>
    <button id="theme" class="theme-btn" type="button"
    aria-label="切換淺色／深色" title="切換淺色／深色"><span aria-hidden="true">◐</span></button>
   </div>
@@ -269,6 +287,8 @@ button.btn.on{background:var(--accent); border-color:var(--accent); color:#fff}
 </header>
 
 <nav><div class="wrap"><div class="steps" role="tablist" id="steps"></div></div></nav>
+
+<div class="wrap" id="solve-host"></div>
 
 <main class="wrap">
  <section class="panel" id="p-teachers" role="tabpanel"></section>
@@ -479,6 +499,12 @@ function renderHandoff(){
   bar.appendChild(el('span','eyebrow','對照')); bar.appendChild(seg); p.appendChild(bar);
 
   const H = D.handoff[hoMode], failed = hoMode==='bad' ? D.solve.badFailed : [];
+  if(hoMode==='bad' && D.handoff.stale){
+    const n = el('div','note warn');
+    n.innerHTML = '這份對照是<b>原始資料</b>算出來的。重新排課後沒有再跑一次「不管導師」的版本，'
+      + '所以下面看到的是目前這份課表的數字，不是對照組。';
+    n.style.marginBottom='14px'; p.appendChild(n);
+  }
   const nOver = Object.values(H).filter(h=>h.over.some(Boolean)).length;
   const nTight = Object.values(H).filter(h=>h.usable===h.need).length;
 
@@ -1088,6 +1114,12 @@ function syncD(){
     D.teachers[t.id] = Object.assign(D.teachers[t.id] || {}, 
       {name:t.name, role:t.role, max:t.max, cap:t.cap});
   });
+  // 個人需求也要寫回共用資料，否則在畫面上改了需求，排課時根本讀不到。
+  // 班級／科目層級的需求（例如「主科排上午」）不歸老師管，原樣保留。
+  const shared = D.constraints.filter(c=>!(c.params && c.params.teacher));
+  D.constraints = shared.concat(TS.constraints.map(c=>({
+    kind:c.kind, params:c.params, hard:!!c.hard, weight:c.weight||1,
+  })));
 }
 function TROWS(){
   if(!TS) TS = loadTS();
@@ -1096,6 +1128,552 @@ function TROWS(){
     subjects:t.subjects, total:assignedPeriods(t.id),
     classes:[...new Set(D.requirements.filter(r=>r.t===t.id).map(r=>r.c))],
   }));
+}
+
+/* ===== SCHEDULER START =====
+   瀏覽器端排課引擎。
+
+   跟 prototype/ 的 CP-SAT 版本是同一個模型，但求解策略不同：
+     CP-SAT  在整個解空間上搜尋，能證明最佳性
+     這裡    用「先貪婪塞滿、再模擬退火改良」，不保證最佳，但不需要後端
+
+   關鍵設計：硬約束永遠當成不變量維護 —— 只在「不會撞堂的位置」之間移動，
+   所以任何時刻的解都是合法的，隨時可以停下來取用。軟需求則化成加權成本，
+   由退火去壓低。這樣即使跑得不夠久，也只會是「品質差一點」，
+   絕不會吐出一份有老師同時教兩班的課表。                                    */
+
+const SW = {
+  TEACHER_DAY_OFF:100, TEACHER_UNAVAILABLE:100, TEACHER_MAX_PER_DAY:40,
+  TEACHER_MAX_RUN:20, SUBJECT_SPREAD:10, TEACHER_COMPACT:5, SUBJECT_NOT_IN:8,
+  CORE_IN_MORNING:2, HOMEROOM_DAY_CAPACITY:500, HOMEROOM_DAY_OFF:150,
+  RESERVE_MORNING:30, SPECIAL_BALANCE:15,
+};
+const HANDOFF = new Set(['HOMEROOM_DAY_CAPACITY','HOMEROOM_DAY_OFF','RESERVE_MORNING','SPECIAL_BALANCE']);
+
+function mkCtx(D){
+  const g = D.grid, NS = g.days*g.periods;
+  const dayOf = s=>Math.floor(s/g.periods)+1, perOf = s=>s%g.periods+1;
+  const canDbl = s=>perOf(s)<g.periods && !g.breaks.includes(perOf(s));
+
+  const wOf = c => (c.weight && c.weight!==1) ? c.weight : (SW[c.kind]||1);
+  const expand = p=>{
+    const out=new Set();
+    const ds = p.days || Array.from({length:g.days},(_,i)=>i+1);
+    const ps = p.periods || Array.from({length:g.periods},(_,i)=>i+1);
+    ds.forEach(d=>ps.forEach(q=>out.add((d-1)*g.periods+(q-1))));
+    return out;
+  };
+  const tBlocked={}, sBlocked={};
+  Object.keys(D.teachers).forEach(t=>tBlocked[t]=new Set());
+  Object.keys(D.subjects).forEach(s=>sBlocked[s]=new Set());
+  D.constraints.forEach(c=>{
+    if(!c.hard) return;
+    const p=c.params||{};
+    if(c.kind==='TEACHER_UNAVAILABLE' && p.teacher) expand(p).forEach(s=>tBlocked[p.teacher].add(s));
+    if(c.kind==='TEACHER_DAY_OFF' && p.teacher)
+      for(let q=1;q<=g.periods;q++) tBlocked[p.teacher].add((p.day-1)*g.periods+(q-1));
+    if(c.kind==='SUBJECT_NOT_IN' && p.subject)
+      for(let d=1;d<=g.days;d++) (p.periods||[]).forEach(q=>sBlocked[p.subject].add((d-1)*g.periods+(q-1)));
+  });
+  const cBlocked={};
+  Object.entries(D.classes).forEach(([id,c])=>cBlocked[id]=new Set(c.blocked));
+
+  const roomsOf={};
+  Object.entries(D.rooms).forEach(([id,r])=>{ (roomsOf[r.type]=roomsOf[r.type]||[]).push(id); });
+  const rcache = {}, rset = {};
+  const rkey = u => u.s + '|' + u.c;
+  const candRooms = u => {
+    const k = rkey(u);
+    if(!rcache[k]){
+      rcache[k] = D.subjects[u.s].room ? (roomsOf[D.subjects[u.s].room]||[]) : [D.classes[u.c].room];
+      rset[k] = new Set(rcache[k]);
+    }
+    return rcache[k];
+  };
+  // 對調兩堂課時會直接沿用對方的教室，所以教室是否合法必須在 canPlace 裡把關，
+  // 不能只靠產生候選位置時過濾 —— 否則體育課會被換進音樂教室。
+  const roomOk = (u, room) => { candRooms(u); return rset[rkey(u)].has(room); };
+
+  const hrOf = {};                       // 班級 -> 導師
+  D.requirements.forEach(r=>{
+    if(!hrOf[r.c] && D.teachers[r.t] && D.teachers[r.t].role==='homeroom') hrOf[r.c]=r.t;
+  });
+  const teachable = {};                  // 班級 -> 每天要上課的節數
+  Object.keys(D.classes).forEach(cid=>{
+    teachable[cid]=[];
+    for(let d=1;d<=g.days;d++){
+      let n=0; for(let q=1;q<=g.periods;q++) if(!cBlocked[cid].has((d-1)*g.periods+(q-1))) n++;
+      teachable[cid].push(n);
+    }
+  });
+  return {D,g,NS,dayOf,perOf,canDbl,tBlocked,sBlocked,cBlocked,candRooms,roomOk,hrOf,teachable,wOf,expand};
+}
+
+function buildUnits(D){
+  const u=[];
+  D.requirements.forEach(r=>{
+    const dbl=r.d||0;
+    for(let i=0;i<dbl;i++) u.push({i:u.length,c:r.c,s:r.s,t:r.t,len:2});
+    for(let i=0;i<r.n-2*dbl;i++) u.push({i:u.length,c:r.c,s:r.s,t:r.t,len:1});
+  });
+  return u;
+}
+
+/* ---------- 佔用狀態：硬約束就靠它維持 ---------- */
+function mkState(ctx, units, fixed){
+  const NS=ctx.NS, occC={}, occT={}, occR={}, tDay={};
+  Object.keys(ctx.D.classes).forEach(k=>occC[k]=new Int32Array(NS).fill(-1));
+  Object.keys(ctx.D.teachers).forEach(k=>{ occT[k]=new Int32Array(NS).fill(-1);
+    tDay[k]=new Int32Array(ctx.g.days+1); });
+  Object.keys(ctx.D.rooms).forEach(k=>occR[k]=new Int32Array(NS).fill(-1));
+  const st={occC,occT,occR,tDay,pos:{},units};
+  (fixed||[]).forEach(p=>{
+    for(let k=0;k<p.len;k++){
+      const s=p.slot+k;
+      occC[p.c][s]=-2; occT[p.t][s]=-2; if(occR[p.r]) occR[p.r][s]=-2;
+      tDay[p.t][ctx.dayOf(s)]++;
+    }
+  });
+  return st;
+}
+function canPlace(ctx, st, u, slot, room){
+  if(!ctx.roomOk(u, room)) return false;
+  if(u.len===2 && !ctx.canDbl(slot)) return false;
+  const cap = ctx.D.teachers[u.t].cap;
+  const d = ctx.dayOf(slot);
+  if(st.tDay[u.t][d] + u.len > cap) return false;
+  for(let k=0;k<u.len;k++){
+    const s=slot+k;
+    if(s>=ctx.NS || ctx.dayOf(s)!==d) return false;
+    if(ctx.cBlocked[u.c].has(s) || ctx.tBlocked[u.t].has(s) || ctx.sBlocked[u.s].has(s)) return false;
+    if(st.occC[u.c][s]!==-1 || st.occT[u.t][s]!==-1 || st.occR[room][s]!==-1) return false;
+  }
+  return true;
+}
+function place(ctx, st, u, slot, room){
+  for(let k=0;k<u.len;k++){ const s=slot+k;
+    st.occC[u.c][s]=u.i; st.occT[u.t][s]=u.i; st.occR[room][s]=u.i; }
+  st.tDay[u.t][ctx.dayOf(slot)] += u.len;
+  st.pos[u.i]={slot,room};
+}
+function unplace(ctx, st, u){
+  const p=st.pos[u.i]; if(!p) return null;
+  for(let k=0;k<u.len;k++){ const s=p.slot+k;
+    st.occC[u.c][s]=-1; st.occT[u.t][s]=-1; st.occR[p.room][s]=-1; }
+  st.tDay[u.t][ctx.dayOf(p.slot)] -= u.len;
+  delete st.pos[u.i];
+  return p;
+}
+function legalSpots(ctx, st, u){
+  const out=[];
+  for(let s=0;s<ctx.NS;s++) for(const r of ctx.candRooms(u))
+    if(canPlace(ctx,st,u,s,r)) out.push([s,r]);
+  return out;
+}
+
+/* ---------- 成本：軟需求 ---------- */
+function penalty(ctx, st, units, opts){
+  const D=ctx.D, g=ctx.g; let total=0;
+  const detail = opts && opts.detail ? {} : null;
+  const add=(v,w,label)=>{ if(v<=0) return; total+=v*w;
+    if(detail) detail[label]=(detail[label]||0)+v*w; };
+
+  const tDay={}, tBusy={}, csDay={};
+  units.forEach(u=>{
+    const p=st.pos[u.i]; if(!p) return;
+    for(let k=0;k<u.len;k++){
+      const s=p.slot+k, d=ctx.dayOf(s);
+      (tDay[u.t]=tDay[u.t]||{})[d]=(tDay[u.t][d]||0)+1;
+      (tBusy[u.t]=tBusy[u.t]||new Set()).add(s);
+      const key=u.c+'|'+u.s+'|'+d; csDay[key]=(csDay[key]||0)+1;
+    }
+  });
+  const busy=(t,s)=>tBusy[t]&&tBusy[t].has(s)?1:0;
+
+  D.constraints.forEach(c=>{
+    if(c.hard) return;
+    if(!opts.handoff && HANDOFF.has(c.kind)) return;
+    const w=ctx.wOf(c), p=c.params||{}, t=p.teacher, nm=t&&D.teachers[t]?D.teachers[t].name:'';
+    switch(c.kind){
+      case 'TEACHER_DAY_OFF':
+        if(!t) break;
+        add((tDay[t]&&tDay[t][p.day])||0, w, `${nm} 希望週${'一二三四五'[p.day-1]}不排課`); break;
+      case 'TEACHER_UNAVAILABLE': {
+        if(!t) break; let n=0; ctx.expand(p).forEach(s=>n+=busy(t,s));
+        add(n, w, `${nm} 希望避開指定時段`); break;
+      }
+      case 'TEACHER_MAX_PER_DAY':
+        if(!t) break;
+        for(let d=1;d<=g.days;d++) add(Math.max(0,((tDay[t]&&tDay[t][d])||0)-p.max), w,
+          `${nm} 一天最多 ${p.max} 節`);
+        break;
+      case 'TEACHER_MAX_RUN':
+        if(!t) break;
+        for(let d=1;d<=g.days;d++) for(let i=1;i+p.max<=g.periods;i++){
+          let n=0; for(let q=i;q<=i+p.max;q++) n+=busy(t,(d-1)*g.periods+(q-1));
+          add(Math.max(0,n-p.max), w, `${nm} 連續上課不超過 ${p.max} 節`);
+        }
+        break;
+      case 'TEACHER_COMPACT':
+        if(!t) break;
+        for(let d=1;d<=g.days;d++) for(let q=1;q+2<=g.periods;q++){
+          const b=i=>busy(t,(d-1)*g.periods+(i-1));
+          if(b(q)&&!b(q+1)&&b(q+2)) add(1,w,`${nm} 課表中的零星空堂`);
+        }
+        break;
+      case 'SUBJECT_SPREAD':
+        Object.keys(D.classes).forEach(cid=>{ for(let d=1;d<=g.days;d++)
+          add(Math.max(0,(csDay[cid+'|'+p.subject+'|'+d]||0)-p.max), w,
+            `${D.classes[cid].name} 的${D.subjects[p.subject].name}一天不超過 ${p.max} 節`); });
+        break;
+      case 'SUBJECT_NOT_IN': {
+        let n=0;
+        units.forEach(u=>{ if(u.s!==p.subject) return; const q=st.pos[u.i]; if(!q) return;
+          for(let k=0;k<u.len;k++) if(p.periods.includes(ctx.perOf(q.slot+k))) n++; });
+        add(n,w,`${D.subjects[p.subject].name}避開第 ${p.periods.join('、')} 節`); break;
+      }
+      case 'CORE_IN_MORNING': {
+        let n=0;
+        units.forEach(u=>{ if(!D.subjects[u.s].core) return; const q=st.pos[u.i]; if(!q) return;
+          for(let k=0;k<u.len;k++) if(!g.morning.includes(ctx.perOf(q.slot+k))) n++; });
+        add(n,w,'主科盡量排在上午'); break;
+      }
+      /* ---- 交接：本階段（科任）要為導師留下能用的空格 ---- */
+      case 'HOMEROOM_DAY_CAPACITY':
+        Object.keys(D.classes).forEach(cid=>{
+          const hr=ctx.hrOf[cid]; if(!hr) return;
+          const cap=D.teachers[hr].cap;
+          for(let d=1;d<=g.days;d++){
+            const floor=ctx.teachable[cid][d-1]-cap; if(floor<=0) continue;
+            let occ=0;
+            units.forEach(u=>{ if(u.c!==cid) return; const q=st.pos[u.i]; if(!q) return;
+              for(let k=0;k<u.len;k++) if(ctx.dayOf(q.slot+k)===d) occ++; });
+            add(Math.max(0,floor-occ), w,
+              `${D.classes[cid].name} 週${'一二三四五'[d-1]}留給導師的空格超出其日上限`);
+          }
+        });
+        break;
+      case 'HOMEROOM_DAY_OFF':
+        D.constraints.forEach(dc=>{
+          if(dc.kind!=='TEACHER_DAY_OFF') return;
+          const tt=dc.params.teacher, T=D.teachers[tt];
+          if(!T || T.role!=='homeroom') return;
+          Object.keys(D.classes).forEach(cid=>{
+            if(ctx.hrOf[cid]!==tt) return;
+            const d=dc.params.day; let occ=0;
+            units.forEach(u=>{ if(u.c!==cid) return; const q=st.pos[u.i]; if(!q) return;
+              for(let k=0;k<u.len;k++) if(ctx.dayOf(q.slot+k)===d) occ++; });
+            add(Math.max(0, ctx.teachable[cid][d-1]-occ), ctx.wOf(dc),
+              `${T.name} 希望週${'一二三四五'[d-1]}不排課`);
+          });
+        });
+        break;
+      case 'RESERVE_MORNING':
+        Object.keys(D.classes).forEach(cid=>{
+          let n=0;
+          units.forEach(u=>{ if(u.c!==cid) return; const q=st.pos[u.i]; if(!q) return;
+            for(let k=0;k<u.len;k++) if(g.morning.includes(ctx.perOf(q.slot+k))) n++; });
+          add(Math.max(0,n-p.max_per_class), w,
+            `${D.classes[cid].name} 上午被科任佔用不超過 ${p.max_per_class} 節`);
+        });
+        break;
+      case 'SPECIAL_BALANCE':
+        Object.keys(D.classes).forEach(cid=>{ for(let d=1;d<=g.days;d++){
+          let n=0;
+          units.forEach(u=>{ if(u.c!==cid) return; const q=st.pos[u.i]; if(!q) return;
+            for(let k=0;k<u.len;k++) if(ctx.dayOf(q.slot+k)===d) n++; });
+          add(Math.max(0,n-p.max_per_day), w,
+            `${D.classes[cid].name} 每天科任課不超過 ${p.max_per_day} 節`);
+        }});
+        break;
+    }
+  });
+  return detail ? {total, detail} : total;
+}
+
+/* ---------- 貪婪初始解：先塞最難塞的，塞不下就把佔位的踢出來重排 ---------- */
+function greedy(ctx, st, units, rnd){
+  const queue = units.slice().sort((a,b)=>
+    legalSpots(ctx,st,a).length - legalSpots(ctx,st,b).length);
+  let guard = units.length*80;
+  const pending = queue.slice();
+  while(pending.length && guard-- > 0){
+    const u = pending.shift();
+    const spots = legalSpots(ctx, st, u);
+    if(spots.length){
+      const [s,r] = spots[(rnd()*spots.length)|0];
+      place(ctx, st, u, s, r);
+      continue;
+    }
+    // 沒有乾淨的位置：隨機挑一個合法起點，把擋路的人踢出去重排（ejection）
+    const cands=[];
+    for(let s=0;s<ctx.NS;s++) for(const r of ctx.candRooms(u)){
+      if(u.len===2 && !ctx.canDbl(s)) continue;
+      let ok=true;
+      for(let k=0;k<u.len;k++){ const x=s+k;
+        if(x>=ctx.NS || ctx.dayOf(x)!==ctx.dayOf(s)) {ok=false;break;}
+        if(ctx.cBlocked[u.c].has(x)||ctx.tBlocked[u.t].has(x)||ctx.sBlocked[u.s].has(x)){ok=false;break;}
+        if(st.occC[u.c][x]===-2||st.occT[u.t][x]===-2||st.occR[r][x]===-2){ok=false;break;}
+      }
+      if(ok) cands.push([s,r]);
+    }
+    if(!cands.length) return false;
+    const [s,r]=cands[(rnd()*cands.length)|0];
+    const evicted=new Set();
+    for(let k=0;k<u.len;k++){ const x=s+k;
+      [st.occC[u.c][x], st.occT[u.t][x], st.occR[r][x]].forEach(id=>{ if(id>=0) evicted.add(id); }); }
+    evicted.forEach(id=>{ unplace(ctx,st,units.find(v=>v.i===id)); });
+    if(!canPlace(ctx,st,u,s,r)){ evicted.forEach(id=>pending.push(units.find(v=>v.i===id))); pending.push(u); continue; }
+    place(ctx,st,u,s,r);
+    evicted.forEach(id=>pending.push(units.find(v=>v.i===id)));
+  }
+  return pending.length===0 && units.every(u=>st.pos[u.i]);
+}
+
+/* ---------- 模擬退火：只在合法位置之間移動／對調 ---------- */
+function restore(ctx, st, units, pos){
+  units.forEach(u=>{ if(st.pos[u.i]) unplace(ctx,st,u); });
+  units.forEach(u=>{ const p=pos[u.i]; if(p) place(ctx,st,u,p.slot,p.room); });
+}
+function snapshot(st, units){
+  const o={}; units.forEach(u=>{ const p=st.pos[u.i]; if(p) o[u.i]={slot:p.slot,room:p.room}; });
+  return o;
+}
+// 讓出控制權給瀏覽器。setTimeout 有 4ms 的最小延遲，MessageChannel 幾乎沒有成本，
+// 所以優先用它；Node 端則走 setImmediate。
+const nextTick = (typeof MessageChannel!=='undefined')
+  ? (()=>{ const ch=new MessageChannel(); let cb=null;
+      ch.port1.onmessage=()=>{ const f=cb; cb=null; if(f) f(); };
+      return ()=>new Promise(r=>{ cb=r; ch.port2.postMessage(0); }); })()
+  : (typeof setImmediate!=='undefined' ? ()=>new Promise(r=>setImmediate(r))
+                                       : ()=>new Promise(r=>setTimeout(r,0)));
+
+async function anneal(ctx, st, units, opts){
+  const rnd=opts.rnd, deadline=Date.now()+opts.ms;
+  const slice = opts.slice || 25;      // 每跑這麼多毫秒就讓出一次
+  let sliceEnd = Date.now()+slice;
+  let cur = penalty(ctx, st, units, opts);
+  let best = cur, bestPos = snapshot(st, units);
+  let T = Math.max(20, cur/8), iter=0;
+
+  while(best>0 && Date.now()<deadline){
+    if(Date.now()>=sliceEnd){
+      if(opts.onTick) opts.onTick({best, iter, phase:opts.phase,
+        left:Math.max(0, deadline-Date.now())});
+      if(opts.cancelled && opts.cancelled()) break;
+      await nextTick();
+      sliceEnd = Date.now()+slice;
+    }
+    iter++;
+    const u = units[(rnd()*units.length)|0];
+    const from = st.pos[u.i]; if(!from) continue;
+
+    // 每一步都記下確切做了什麼，退回時才能精準還原，不必整盤重建
+    let undo = null;
+    unplace(ctx, st, u);
+    if(rnd()<0.72){
+      const spots = legalSpots(ctx, st, u);
+      if(!spots.length){ place(ctx,st,u,from.slot,from.room); continue; }
+      const [s,r] = spots[(rnd()*spots.length)|0];
+      place(ctx, st, u, s, r);
+      undo = ()=>{ unplace(ctx,st,u); place(ctx,st,u,from.slot,from.room); };
+    } else {
+      const v = units[(rnd()*units.length)|0];
+      const to = (v.i!==u.i) ? st.pos[v.i] : null;
+      if(!to){ place(ctx,st,u,from.slot,from.room); continue; }
+      unplace(ctx, st, v);
+      if(!canPlace(ctx,st,u,to.slot,to.room)){
+        place(ctx,st,v,to.slot,to.room); place(ctx,st,u,from.slot,from.room); continue;
+      }
+      place(ctx,st,u,to.slot,to.room);
+      if(!canPlace(ctx,st,v,from.slot,from.room)){
+        unplace(ctx,st,u); place(ctx,st,v,to.slot,to.room); place(ctx,st,u,from.slot,from.room); continue;
+      }
+      place(ctx,st,v,from.slot,from.room);
+      undo = ()=>{ unplace(ctx,st,u); unplace(ctx,st,v);
+                   place(ctx,st,u,from.slot,from.room); place(ctx,st,v,to.slot,to.room); };
+    }
+
+    const p = penalty(ctx, st, units, opts);
+    if(p<=cur || rnd()<Math.exp((cur-p)/T)){
+      cur = p;
+      if(p<best){ best=p; bestPos = snapshot(st, units); }
+    } else undo();
+
+    T *= 0.9997; if(T<0.4) T=0.4;
+  }
+  restore(ctx, st, units, bestPos);
+  return {best, iter};
+}
+
+/* ---------- 對外入口：分階段排課 ---------- */
+function mulberry(seed){
+  return function(){ seed|=0; seed=seed+0x6D2B79F5|0;
+    let t=Math.imul(seed^seed>>>15, 1|seed);
+    t=t+Math.imul(t^t>>>7, 61|t)^t;
+    return ((t^t>>>14)>>>0)/4294967296; };
+}
+async function schedule(D, opts){
+  opts = opts || {};
+  const ctx = mkCtx(D), rnd = mulberry(opts.seed||1);
+  const all = buildUnits(D);
+  const p1 = all.filter(u=>D.teachers[u.t].role!=='homeroom');
+  const p2 = all.filter(u=>D.teachers[u.t].role==='homeroom');
+  const t0 = Date.now();
+
+  // Phase 1：科任與兼行政，全校一起排。目標式包含「為導師保留空格」
+  const st1 = mkState(ctx, p1, []);
+  if(!greedy(ctx, st1, p1, rnd)) return {ok:false, reason:'科任課排不進去，請檢查配課與專科教室數量'};
+  const r1 = await anneal(ctx, st1, p1, {rnd, ms: opts.ms1 ?? 3000, handoff:true,
+    onTick: opts.onTick, cancelled: opts.cancelled, phase:1});
+  const fixed = p1.map(u=>({c:u.c,s:u.s,t:u.t,len:u.len,slot:st1.pos[u.i].slot,r:st1.pos[u.i].room}));
+
+  // Phase 2：導師的課逐班獨立排 —— 班與班之間沒有任何交互作用
+  const out = fixed.slice(), failed=[]; let pen2=0;
+  const cids = Object.keys(D.classes);
+  for(const cid of cids){
+    const mine = p2.filter(u=>u.c===cid);
+    if(!mine.length) continue;
+    const st2 = mkState(ctx, mine, fixed);
+    if(!greedy(ctx, st2, mine, rnd)){ failed.push(cid); continue; }
+    const r2 = await anneal(ctx, st2, mine, {rnd, ms: opts.ms2 ?? 250, handoff:false,
+      onTick: opts.onTick, cancelled: opts.cancelled, phase:2, label:cid});
+    pen2 += r2.best;
+    mine.forEach(u=>out.push({c:u.c,s:u.s,t:u.t,len:u.len,
+                              slot:st2.pos[u.i].slot, r:st2.pos[u.i].room}));
+  }
+
+  const stAll = mkState(ctx, all, []);
+  const idx = {}; all.forEach(u=>{ (idx[u.c+'|'+u.s]=idx[u.c+'|'+u.s]||[]).push(u); });
+  out.forEach(p=>{ const u=(idx[p.c+'|'+p.s]||[]).find(v=>v.len===p.len && !stAll.pos[v.i]);
+                   if(u) place(ctx, stAll, u, p.slot, p.r); });
+  const det = penalty(ctx, stAll, all, {handoff:false, detail:true});
+
+  return {ok:failed.length===0, placements:out, failed,
+          penalty1:r1.best, penalty2:pen2, penalty:det.total, detail:det.detail,
+          iters:r1.iter, ms:Date.now()-t0};
+}
+/* 科任排完後，各班留給導師什麼樣的空格 —— 交接檢查畫面用 */
+function handoffReport(D, phase1){
+  const ctx = mkCtx(D), g=D.grid, out={};
+  const used={}; Object.keys(D.classes).forEach(c=>used[c]=new Set());
+  phase1.forEach(p=>{ for(let k=0;k<p.len;k++) used[p.c].add(p.slot+k); });
+  Object.entries(D.classes).forEach(([cid,cls])=>{
+    const blocked=new Set(cls.blocked), free=[];
+    for(let s=0;s<ctx.NS;s++) if(!blocked.has(s) && !used[cid].has(s)) free.push(s);
+    const fs=new Set(free);
+    const per_day=[]; for(let d=1;d<=g.days;d++) per_day.push(free.filter(s=>ctx.dayOf(s)===d).length);
+    const hr=ctx.hrOf[cid], cap=hr?D.teachers[hr].cap:99;
+    const need=D.requirements.filter(r=>r.c===cid && D.teachers[r.t].role==='homeroom')
+                             .reduce((n,r)=>n+r.n,0);
+    const core=D.requirements.filter(r=>r.c===cid && D.teachers[r.t].role==='homeroom'
+                             && D.subjects[r.s].core).reduce((n,r)=>n+r.n,0);
+    const morning_free=free.filter(s=>g.morning.includes(ctx.perOf(s))).length;
+    out[cid]={free:free.length, need, morning_free, core_need:core,
+      core_fits_morning: morning_free>=core, per_day,
+      day_spread: Math.max(...per_day)-Math.min(...per_day),
+      double_slots: free.filter(s=>ctx.canDbl(s)&&fs.has(s+1)).length,
+      cap, usable: per_day.reduce((n,x)=>n+Math.min(x,cap),0),
+      over: per_day.map(n=>n>cap)};
+  });
+  return out;
+}
+/* ===== SCHEDULER END ===== */
+
+/* ============ 線上排課 ============
+   求解直接在瀏覽器裡跑，不需要後端。演算法會分時讓出控制權，
+   所以求解過程中畫面不會凍住，隨時可以停 —— 停下來拿到的也是一份合法課表，
+   因為硬約束全程都是不變量。                                              */
+
+let solving = false, cancelSolve = false, hideTimer = null;
+
+function solveBarHTML(){
+  return `<div id="solve-bar" hidden>
+    <div class="sb-row">
+      <span class="sb-phase" id="sb-phase">準備中</span>
+      <div class="sb-track"><i id="sb-fill"></i></div>
+      <span class="mono sb-cost" id="sb-cost"></span>
+      <button class="btn" id="sb-stop" type="button">停止</button>
+    </div>
+  </div>`;
+}
+
+async function runSolve(seconds){
+  if(solving) return;
+  solving = true; cancelSolve = false;
+  // 上一輪結束後排了一個「稍後隱藏進度列」的計時器，若在它到期前又按下重新排課，
+  // 它會把進行中的進度列關掉 —— 所以每次開始都要先取消它。
+  if(hideTimer){ clearTimeout(hideTimer); hideTimer = null; }
+  const bar = document.getElementById('solve-bar');
+  const btn = document.getElementById('solve-btn');
+  const fill = document.getElementById('sb-fill');
+  const ph = document.getElementById('sb-phase');
+  const cost = document.getElementById('sb-cost');
+  bar.hidden = false; btn.disabled = true; btn.textContent = '排課中…';
+
+  const ms1 = Math.round(seconds*1000*0.75), ms2 = Math.round(seconds*1000*0.25/12);
+  const total = ms1 + ms2*12; const t0 = Date.now();
+
+  try{
+    const res = await schedule(D, {
+      ms1, ms2, seed: (Math.random()*1e9)|0,
+      onTick: ({best, phase, label})=>{
+        const pct = Math.min(100, (Date.now()-t0)/total*100);
+        fill.style.width = pct.toFixed(1)+'%';
+        ph.textContent = phase===1 ? '科任／行政排課' : `導師排課　${D.classes[label]?D.classes[label].name:''}`;
+        cost.textContent = '成本 '+best;
+      },
+      cancelled: ()=>cancelSolve,
+    });
+    if(!res.ok && !res.placements){
+      bar.hidden=true;
+      alert('排不出來：'+(res.reason||'請檢查配課與教室設定'));
+      return;
+    }
+    applySolution(res);
+    fill.style.width='100%';
+    ph.textContent = res.failed.length
+      ? `完成，但 ${res.failed.map(c=>D.classes[c].name).join('、')} 排不出來`
+      : '完成';
+    cost.textContent = `成本 ${res.penalty}　${((Date.now()-t0)/1000).toFixed(1)}s`;
+    hideTimer = setTimeout(()=>{ bar.hidden=true; hideTimer=null; }, 4000);
+  } finally {
+    solving=false; btn.disabled=false; btn.textContent='重新排課';
+  }
+}
+
+/* 把新解寫回共用資料，讓每個畫面都跟著更新 */
+function applySolution(res){
+  D.placements = res.placements.map(p=>({
+    c:p.c, s:p.s, t:p.t, r:p.r, slot:p.slot, len:p.len,
+    ph: D.teachers[p.t].role==='homeroom' ? 2 : 1,
+  }));
+  Object.keys(P2).forEach(k=>delete P2[k]);
+  D.placements.filter(x=>x.ph===2).forEach(x=>{ (P2[x.c]=P2[x.c]||[]).push({...x}); });
+  Object.keys(P2_ORIG).forEach(k=>delete P2_ORIG[k]);
+  Object.assign(P2_ORIG, JSON.parse(JSON.stringify(P2)));
+  p2Sel = null;
+
+  D.handoff.good = handoffReport(D, D.placements.filter(x=>x.ph===1));
+  D.handoff.bad = D.handoff.good; D.handoff.stale = true;   // 對照組需另外求解
+  D.solve.p1 = {
+    status:'LOCAL', time:+(res.ms/1000).toFixed(1), penalty:res.penalty,
+    violations: Object.entries(res.detail||{}).sort((a,b)=>b[1]-a[1])
+                 .map(([k,v])=>`${k}（成本 ${v}）`),
+  };
+  D.solve.p2 = {}; D.solve.badFailed = res.failed;
+  refreshStats();
+  const i = STEPS.findIndex(([id])=>!document.getElementById(id).hidden);
+  if(i>=0) STEPS[i][2]();
+}
+
+function refreshStats(){
+  const cl = countClashes(allPlacements());
+  document.getElementById('stats').innerHTML = [
+    [Object.keys(D.classes).length,'班級'], [TROWS().length,'教師'],
+    [Object.keys(D.rooms).length,'教室'], [D.placements.length,'排定單元'],
+    [cl.c+cl.t+cl.r, '硬衝突'],
+  ].map(([n,l])=>`<div class="stat"><b>${n}</b><span>${l}</span></div>`).join('');
 }
 
 /* ============ 導覽 ============ */
@@ -1124,11 +1702,10 @@ function go(i){
   STEPS[i][2]();
   window.scrollTo({top:0, behavior:'instant'});
 }
-document.getElementById('stats').innerHTML = [
-  [Object.keys(D.classes).length,'班級'], [TROWS().length,'教師'],
-  [Object.keys(D.rooms).length,'教室'], [D.placements.length,'排定單元'],
-  [countClashes(allPlacements()).c + countClashes(allPlacements()).t + countClashes(allPlacements()).r, '硬衝突'],
-].map(([n,l])=>`<div class="stat"><b>${n}</b><span>${l}</span></div>`).join('');
+document.getElementById('solve-host').innerHTML = solveBarHTML();
+document.getElementById('solve-btn').onclick = ()=>runSolve(10);
+document.getElementById('sb-stop').onclick = ()=>{ cancelSolve = true; };
+refreshStats();
 go(0);
 
 (function(){
