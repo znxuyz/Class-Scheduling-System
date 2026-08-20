@@ -62,6 +62,18 @@ python3 compare_handoff.py                   # 交接品質對照實驗
 | `prototype/run.py` | CLI 進入點 |
 | `prototype/data/sample_school.json` | 範例資料（全部設定皆為資料驅動） |
 
+## 線上操作（GitHub Pages）
+
+**https://znxuyz.github.io/Class-Scheduling-System/**
+
+首次啟用：GitHub repo → **Settings → Pages → Source** 選 `Deploy from a branch`，
+分支選 `claude/elementary-school-scheduling-38pupq`、資料夾選 **`/docs`**，按 Save。
+之後每次推送 `docs/` 都會自動更新。
+
+> GitHub Pages 只能放靜態檔案，**排課求解（CP-SAT）跑不起來**。
+> 網站上的課表是 `prototype/` 事先算好的結果，可以檢視、可以手動調整並即時檢核，
+> 但改了配課沒辦法重新求解。要能真的重排，需要後端 API 或把求解器搬進瀏覽器。
+
 ## 畫面原型
 
 `ui/index.html` 是可互動的畫面原型，五個步驟對應實際作業流程，
@@ -74,5 +86,11 @@ python3 compare_handoff.py                   # 交接品質對照實驗
 5. **課表檢視** — 班級／教師／教室三視角，硬約束即時驗證
 
 ```bash
-cd prototype && python3 export_ui.py    # 重新匯出畫面用資料
+cd prototype && python3 export_ui.py    # 重新求解並匯出畫面用資料
+python3 ui/build_site.py                # 由 ui/index.html 產生 docs/index.html
 ```
+
+`ui/index.html` 是給 Artifact 用的片段（外殼由平台補上）；
+`docs/index.html` 是 GitHub Pages 用的完整網頁，由 `ui/build_site.py` 產生，
+會補上 `<meta charset>`、viewport、favicon 與自己的深淺色切換鈕。
+**改樣式請改 `ui/index.html`，再重新建置**，不要直接改 `docs/index.html`。
