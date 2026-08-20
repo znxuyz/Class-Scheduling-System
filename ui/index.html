@@ -1,0 +1,711 @@
+<title>國小排課系統</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap">
+<style>
+:root{
+  --ground:#EDF1F0; --surface:#FFFFFF; --surface-2:#F5F8F7; --sunken:#E3E9E7;
+  --ink:#101917; --ink-2:#4A5956; --ink-3:#778582; --line:#D3DCD9; --line-2:#C0CCC8;
+  --accent:#0D6E66; --accent-soft:#DCEAE8; --accent-ink:#0A544E;
+  --homeroom:#A8672F; --homeroom-bg:#F6EADF; --homeroom-line:#E0C3A4;
+  --special:#16736C; --special-bg:#DDEDEB; --special-line:#A9CFCA;
+  --admin:#55589E; --admin-bg:#E4E5F4; --admin-line:#B9BBDF;
+  --ok:#3D7A44; --ok-bg:#E1EFE2; --warn:#A9761A; --warn-bg:#F7ECD8; --bad:#AB3B2C; --bad-bg:#F7E3E0;
+  --shadow:0 1px 2px rgba(16,25,23,.06),0 4px 16px rgba(16,25,23,.05);
+  --r:7px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ground:#0E1413; --surface:#171F1D; --surface-2:#1C2523; --sunken:#121A18;
+  --ink:#E4EAE7; --ink-2:#A3B0AC; --ink-3:#75837F; --line:#2A3634; --line-2:#3A4744;
+  --accent:#4FB5AA; --accent-soft:#16302D; --accent-ink:#7FCFC5;
+  --homeroom:#D89A5F; --homeroom-bg:#2E2318; --homeroom-line:#54402A;
+  --special:#4FB0A6; --special-bg:#152B29; --special-line:#2B4A46;
+  --admin:#9093D6; --admin-bg:#1E2038; --admin-line:#383B63;
+  --ok:#6FB575; --ok-bg:#17281A; --warn:#D8A445; --warn-bg:#2C2314; --bad:#E07D6C; --bad-bg:#2E1B18;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 4px 16px rgba(0,0,0,.3);
+}}
+:root[data-theme="dark"]{
+  --ground:#0E1413; --surface:#171F1D; --surface-2:#1C2523; --sunken:#121A18;
+  --ink:#E4EAE7; --ink-2:#A3B0AC; --ink-3:#75837F; --line:#2A3634; --line-2:#3A4744;
+  --accent:#4FB5AA; --accent-soft:#16302D; --accent-ink:#7FCFC5;
+  --homeroom:#D89A5F; --homeroom-bg:#2E2318; --homeroom-line:#54402A;
+  --special:#4FB0A6; --special-bg:#152B29; --special-line:#2B4A46;
+  --admin:#9093D6; --admin-bg:#1E2038; --admin-line:#383B63;
+  --ok:#6FB575; --ok-bg:#17281A; --warn:#D8A445; --warn-bg:#2C2314; --bad:#E07D6C; --bad-bg:#2E1B18;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 4px 16px rgba(0,0,0,.3);
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:"Noto Sans TC",system-ui,-apple-system,"Microsoft JhengHei",sans-serif;
+  font-size:14px; line-height:1.6; -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{font-family:"Noto Serif TC",Georgia,serif; text-wrap:balance; margin:0; font-weight:600}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace; font-variant-numeric:tabular-nums}
+.wrap{max-width:1240px; margin:0 auto; padding:0 24px}
+
+/* ---------- header ---------- */
+header{border-bottom:1px solid var(--line); background:var(--surface)}
+.head{display:flex; align-items:flex-end; justify-content:space-between; gap:24px; padding:22px 0 18px; flex-wrap:wrap}
+h1{font-size:22px; letter-spacing:.01em}
+.sub{color:var(--ink-2); font-size:13px; margin-top:3px}
+.stats{display:flex; gap:22px; flex-wrap:wrap}
+.stat{text-align:right}
+.stat b{display:block; font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums;
+  font-size:19px; font-weight:600; line-height:1.2; color:var(--ink)}
+.stat span{font-size:11px; color:var(--ink-3); letter-spacing:.08em}
+
+/* ---------- step nav ---------- */
+nav{background:var(--surface); border-bottom:1px solid var(--line); position:sticky; top:0; z-index:20}
+.steps{display:flex; gap:0; overflow-x:auto; scrollbar-width:thin}
+.step{
+  appearance:none; background:none; border:0; border-bottom:2px solid transparent;
+  padding:11px 17px 10px; display:flex; align-items:center; gap:9px; cursor:pointer;
+  color:var(--ink-3); font-family:inherit; font-size:13.5px; white-space:nowrap; transition:color .15s;
+}
+.step:hover{color:var(--ink-2)}
+.step .n{
+  font-family:"IBM Plex Mono",monospace; font-size:11px; width:19px; height:19px; flex:none;
+  border:1px solid var(--line-2); border-radius:50%; display:grid; place-items:center; color:var(--ink-3);
+}
+.step[aria-selected="true"]{color:var(--ink); border-bottom-color:var(--accent); font-weight:500}
+.step[aria-selected="true"] .n{background:var(--accent); border-color:var(--accent); color:#fff}
+:root[data-theme="dark"] .step[aria-selected="true"] .n{color:#0E1413}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .step[aria-selected="true"] .n{color:#0E1413}}
+.step:focus-visible{outline:2px solid var(--accent); outline-offset:-2px}
+
+/* ---------- layout ---------- */
+main{padding:26px 0 64px}
+.panel[hidden]{display:none}
+.lede{max-width:64ch; color:var(--ink-2); margin:0 0 20px; font-size:14px}
+.lede strong{color:var(--ink); font-weight:500}
+.cols{display:grid; grid-template-columns:265px 1fr; gap:22px; align-items:start}
+@media(max-width:900px){.cols{grid-template-columns:1fr}}
+.card{background:var(--surface); border:1px solid var(--line); border-radius:var(--r); box-shadow:var(--shadow)}
+.card-h{padding:12px 15px; border-bottom:1px solid var(--line); display:flex;
+  align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap}
+.card-h h3{font-size:14px}
+.card-b{padding:15px}
+.eyebrow{font-size:10.5px; letter-spacing:.12em; color:var(--ink-3); text-transform:uppercase; font-weight:500}
+
+/* ---------- timetable grid ---------- */
+.tt-scroll{overflow-x:auto}
+.tt{display:grid; grid-template-columns:52px repeat(5,minmax(112px,1fr));
+  grid-auto-rows:minmax(50px,auto); gap:3px; min-width:660px}
+.tt-hd{font-size:11.5px; color:var(--ink-3); text-align:center; padding:5px 0; letter-spacing:.06em}
+.tt-p{
+  font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--ink-3);
+  display:flex; align-items:center; justify-content:center; border-right:1px solid var(--line);
+}
+.cell{
+  min-height:50px; border-radius:5px; border:1px solid var(--line); background:var(--surface-2);
+  padding:5px 7px; display:flex; flex-direction:column; justify-content:center; gap:1px;
+  font-size:12.5px; position:relative; transition:background .12s,border-color .12s;
+}
+.cell .t1{font-weight:500; line-height:1.3}
+.cell .t2{font-size:10.5px; color:var(--ink-3); line-height:1.3}
+.cell.blocked{background:transparent; border-style:dashed; border-color:var(--line);
+  background-image:repeating-linear-gradient(45deg,transparent,transparent 5px,var(--sunken) 5px,var(--sunken) 10px)}
+.cell.free{background:var(--sunken); border-color:transparent}
+.cell.r-homeroom{background:var(--homeroom-bg); border-color:var(--homeroom-line)}
+.cell.r-homeroom .t1{color:var(--homeroom)}
+.cell.r-special{background:var(--special-bg); border-color:var(--special-line)}
+.cell.r-special .t1{color:var(--special)}
+.cell.r-admin{background:var(--admin-bg); border-color:var(--admin-line)}
+.cell.r-admin .t1{color:var(--admin)}
+.cell.dbl::after{content:"連堂"; position:absolute; top:3px; right:4px; font-size:9px;
+  letter-spacing:.05em; color:var(--ink-3); opacity:.8}
+.cell.locked{opacity:.62}
+.cell.movable{cursor:grab}
+.cell.movable:hover{border-color:var(--accent); box-shadow:0 0 0 1px var(--accent)}
+.cell.sel{box-shadow:0 0 0 2px var(--accent); border-color:var(--accent)}
+.cell.tgt-ok{background:var(--ok-bg); border:1px dashed var(--ok); cursor:pointer}
+.cell.tgt-ok:hover{box-shadow:0 0 0 2px var(--ok)}
+.cell.tgt-no{background:var(--bad-bg); border:1px dashed var(--bad); cursor:not-allowed}
+.cell:focus-visible{outline:2px solid var(--accent); outline-offset:1px}
+
+/* ---------- misc ---------- */
+.chip{display:inline-flex; align-items:center; gap:5px; font-size:11px; padding:2px 8px;
+  border-radius:99px; border:1px solid var(--line-2); color:var(--ink-2); background:var(--surface-2)}
+.chip.homeroom{color:var(--homeroom); background:var(--homeroom-bg); border-color:var(--homeroom-line)}
+.chip.special{color:var(--special); background:var(--special-bg); border-color:var(--special-line)}
+.chip.admin{color:var(--admin); background:var(--admin-bg); border-color:var(--admin-line)}
+.chip.ok{color:var(--ok); background:var(--ok-bg); border-color:var(--ok)}
+.chip.warn{color:var(--warn); background:var(--warn-bg); border-color:var(--warn)}
+.chip.bad{color:var(--bad); background:var(--bad-bg); border-color:var(--bad)}
+table{width:100%; border-collapse:collapse; font-size:13px}
+th{text-align:left; font-weight:500; font-size:10.5px; letter-spacing:.09em; color:var(--ink-3);
+  text-transform:uppercase; padding:7px 9px; border-bottom:1px solid var(--line); white-space:nowrap}
+td{padding:7px 9px; border-bottom:1px solid var(--line); vertical-align:middle}
+tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--surface-2)}
+td.num{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; text-align:right}
+.bar{height:5px; border-radius:3px; background:var(--sunken); overflow:hidden; min-width:56px}
+.bar i{display:block; height:100%; border-radius:3px; background:var(--accent)}
+.bar i.warn{background:var(--warn)} .bar i.bad{background:var(--bad)}
+select,button.btn{font-family:inherit; font-size:13px; color:var(--ink); background:var(--surface);
+  border:1px solid var(--line-2); border-radius:5px; padding:5px 9px; cursor:pointer}
+select:focus-visible,button:focus-visible{outline:2px solid var(--accent); outline-offset:1px}
+button.btn:hover{border-color:var(--accent); color:var(--accent)}
+button.btn.on{background:var(--accent); border-color:var(--accent); color:#fff}
+:root[data-theme="dark"] button.btn.on{color:#0E1413}
+.seg{display:inline-flex; border:1px solid var(--line-2); border-radius:5px; overflow:hidden}
+.seg button{appearance:none; border:0; background:var(--surface); color:var(--ink-2);
+  font-family:inherit; font-size:12.5px; padding:5px 12px; cursor:pointer; border-right:1px solid var(--line-2)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--accent); color:#fff}
+:root[data-theme="dark"] .seg button[aria-pressed="true"]{color:#0E1413}
+.note{padding:10px 13px; border-radius:6px; font-size:12.5px; border-left:3px solid; line-height:1.55}
+.note.ok{background:var(--ok-bg); border-color:var(--ok)}
+.note.warn{background:var(--warn-bg); border-color:var(--warn)}
+.note.bad{background:var(--bad-bg); border-color:var(--bad)}
+.note.info{background:var(--accent-soft); border-color:var(--accent)}
+.vlist{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:7px}
+.vlist li{font-size:12.5px; color:var(--ink-2); display:flex; gap:8px; align-items:baseline}
+.legend{display:flex; gap:13px; flex-wrap:wrap; font-size:11.5px; color:var(--ink-3); align-items:center}
+.sw{width:11px; height:11px; border-radius:3px; display:inline-block; vertical-align:-1px; margin-right:4px; border:1px solid}
+.kv{display:flex; justify-content:space-between; gap:12px; padding:5px 0; font-size:12.5px; border-bottom:1px solid var(--line)}
+.kv:last-child{border-bottom:0}
+.kv span{color:var(--ink-3)} .kv b{font-weight:500; font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums}
+.dayrow{display:flex; gap:3px; align-items:center}
+.daybox{width:22px; height:22px; border-radius:4px; display:grid; place-items:center;
+  font-family:"IBM Plex Mono",monospace; font-size:11px; border:1px solid var(--line-2); background:var(--surface-2)}
+.daybox.over{background:var(--bad-bg); border-color:var(--bad); color:var(--bad); font-weight:600}
+.daybox.zero{color:var(--ink-3); opacity:.5}
+@media(prefers-reduced-motion:reduce){*{transition:none!important; animation:none!important}}
+</style>
+
+<header>
+ <div class="wrap head">
+  <div>
+   <h1>國小排課系統</h1>
+   <div class="sub">教師配課與教室排課　·　科任先排、導師後排　·　畫面原型（資料為實際求解結果）</div>
+  </div>
+  <div class="stats" id="stats"></div>
+ </div>
+</header>
+
+<nav><div class="wrap"><div class="steps" role="tablist" id="steps"></div></div></nav>
+
+<main class="wrap">
+ <section class="panel" id="p-load" role="tabpanel"></section>
+ <section class="panel" id="p-phase1" role="tabpanel" hidden></section>
+ <section class="panel" id="p-handoff" role="tabpanel" hidden></section>
+ <section class="panel" id="p-phase2" role="tabpanel" hidden></section>
+ <section class="panel" id="p-view" role="tabpanel" hidden></section>
+</main>
+
+<script type="application/json" id="data">{"grid":{"days":5,"periods":7,"morning":[1,2,3,4],"breaks":[4]},"subjects":{"CH":{"name":"國語","room":null,"core":true},"MA":{"name":"數學","room":null,"core":true},"LI":{"name":"生活","room":null,"core":false},"SO":{"name":"社會","room":null,"core":false},"IN":{"name":"綜合","room":null,"core":false},"HE":{"name":"健康","room":null,"core":false},"FX":{"name":"彈性","room":null,"core":false},"SC":{"name":"自然","room":"science","core":false},"EN":{"name":"英語","room":null,"core":false},"PE":{"name":"體育","room":"pe","core":false},"MU":{"name":"音樂","room":"music","core":false},"AR":{"name":"美勞","room":"art","core":false},"CO":{"name":"電腦","room":"computer","core":false}},"rooms":{"SCI1":{"name":"自然教室","type":"science"},"PE1":{"name":"活動中心","type":"pe"},"MUS1":{"name":"音樂教室","type":"music"},"ART1":{"name":"美勞教室","type":"art"},"COM1":{"name":"電腦教室","type":"computer"},"R101":{"name":"101 教室","type":"homeroom"},"R102":{"name":"102 教室","type":"homeroom"},"R201":{"name":"201 教室","type":"homeroom"},"R202":{"name":"202 教室","type":"homeroom"},"R301":{"name":"301 教室","type":"homeroom"},"R302":{"name":"302 教室","type":"homeroom"},"R401":{"name":"401 教室","type":"homeroom"},"R402":{"name":"402 教室","type":"homeroom"},"R501":{"name":"501 教室","type":"homeroom"},"R502":{"name":"502 教室","type":"homeroom"},"R601":{"name":"601 教室","type":"homeroom"},"R602":{"name":"602 教室","type":"homeroom"}},"classes":{"101":{"name":"1 年 1 班","grade":1,"room":"R101","blocked":[6,13,20,27,34,18,19]},"102":{"name":"1 年 2 班","grade":1,"room":"R102","blocked":[6,13,20,27,34,18,19]},"201":{"name":"2 年 1 班","grade":2,"room":"R201","blocked":[6,13,20,27,34,18,19]},"202":{"name":"2 年 2 班","grade":2,"room":"R202","blocked":[6,13,20,27,34,18,19]},"301":{"name":"3 年 1 班","grade":3,"room":"R301","blocked":[18,19,20]},"302":{"name":"3 年 2 班","grade":3,"room":"R302","blocked":[18,19,20]},"401":{"name":"4 年 1 班","grade":4,"room":"R401","blocked":[18,19,20]},"402":{"name":"4 年 2 班","grade":4,"room":"R402","blocked":[18,19,20]},"501":{"name":"5 年 1 班","grade":5,"room":"R501","blocked":[19,20]},"502":{"name":"5 年 2 班","grade":5,"room":"R502","blocked":[19,20]},"601":{"name":"6 年 1 班","grade":6,"room":"R601","blocked":[19,20]},"602":{"name":"6 年 2 班","grade":6,"room":"R602","blocked":[19,20]}},"teachers":{"S_MU":{"name":"音樂老師","role":"special","max":20,"cap":5},"S_AR":{"name":"美勞老師","role":"special","max":20,"cap":5},"A_STU":{"name":"學務主任","role":"admin","max":10,"cap":3},"S_CO":{"name":"電腦老師","role":"special","max":20,"cap":5},"A_ACA":{"name":"教務主任","role":"admin","max":10,"cap":3},"S_PE":{"name":"體育老師","role":"special","max":26,"cap":6},"S_SC":{"name":"自然老師","role":"special","max":26,"cap":6},"S_EN1":{"name":"英語老師甲","role":"special","max":20,"cap":5},"S_EN2":{"name":"英語老師乙","role":"special","max":20,"cap":5},"HR_101":{"name":"101 導師","role":"homeroom","max":24,"cap":6},"HR_102":{"name":"102 導師","role":"homeroom","max":24,"cap":6},"HR_201":{"name":"201 導師","role":"homeroom","max":24,"cap":6},"HR_202":{"name":"202 導師","role":"homeroom","max":24,"cap":6},"HR_301":{"name":"301 導師","role":"homeroom","max":24,"cap":6},"HR_302":{"name":"302 導師","role":"homeroom","max":24,"cap":6},"HR_401":{"name":"401 導師","role":"homeroom","max":24,"cap":6},"HR_402":{"name":"402 導師","role":"homeroom","max":24,"cap":6},"HR_501":{"name":"501 導師","role":"homeroom","max":24,"cap":6},"HR_502":{"name":"502 導師","role":"homeroom","max":24,"cap":6},"HR_601":{"name":"601 導師","role":"homeroom","max":24,"cap":6},"HR_602":{"name":"602 導師","role":"homeroom","max":24,"cap":6}},"requirements":[{"c":"101","s":"CH","n":8,"t":"HR_101","d":0},{"c":"101","s":"MA","n":4,"t":"HR_101","d":0},{"c":"101","s":"LI","n":4,"t":"HR_101","d":1},{"c":"101","s":"IN","n":2,"t":"HR_101","d":1},{"c":"101","s":"HE","n":1,"t":"HR_101","d":0},{"c":"101","s":"MU","n":1,"t":"S_MU","d":0},{"c":"101","s":"PE","n":2,"t":"S_PE","d":0},{"c":"101","s":"AR","n":1,"t":"S_AR","d":0},{"c":"101","s":"CO","n":1,"t":"S_CO","d":0},{"c":"102","s":"CH","n":8,"t":"HR_102","d":0},{"c":"102","s":"MA","n":4,"t":"HR_102","d":0},{"c":"102","s":"LI","n":4,"t":"HR_102","d":1},{"c":"102","s":"IN","n":2,"t":"HR_102","d":1},{"c":"102","s":"HE","n":1,"t":"HR_102","d":0},{"c":"102","s":"MU","n":1,"t":"S_MU","d":0},{"c":"102","s":"PE","n":2,"t":"S_PE","d":0},{"c":"102","s":"AR","n":1,"t":"A_STU","d":0},{"c":"102","s":"CO","n":1,"t":"A_ACA","d":0},{"c":"201","s":"CH","n":8,"t":"HR_201","d":0},{"c":"201","s":"MA","n":4,"t":"HR_201","d":0},{"c":"201","s":"LI","n":4,"t":"HR_201","d":1},{"c":"201","s":"IN","n":2,"t":"HR_201","d":1},{"c":"201","s":"HE","n":1,"t":"HR_201","d":0},{"c":"201","s":"MU","n":1,"t":"S_MU","d":0},{"c":"201","s":"PE","n":2,"t":"S_PE","d":0},{"c":"201","s":"AR","n":1,"t":"S_AR","d":0},{"c":"201","s":"CO","n":1,"t":"S_CO","d":0},{"c":"202","s":"CH","n":8,"t":"HR_202","d":0},{"c":"202","s":"MA","n":4,"t":"HR_202","d":0},{"c":"202","s":"LI","n":4,"t":"HR_202","d":1},{"c":"202","s":"IN","n":2,"t":"HR_202","d":1},{"c":"202","s":"HE","n":1,"t":"HR_202","d":0},{"c":"202","s":"MU","n":1,"t":"S_MU","d":0},{"c":"202","s":"PE","n":2,"t":"S_PE","d":0},{"c":"202","s":"AR","n":1,"t":"A_STU","d":0},{"c":"202","s":"CO","n":1,"t":"A_ACA","d":0},{"c":"301","s":"CH","n":6,"t":"HR_301","d":0},{"c":"301","s":"MA","n":4,"t":"HR_301","d":0},{"c":"301","s":"SO","n":3,"t":"HR_301","d":0},{"c":"301","s":"IN","n":3,"t":"HR_301","d":1},{"c":"301","s":"HE","n":1,"t":"HR_301","d":0},{"c":"301","s":"FX","n":3,"t":"HR_301","d":0},{"c":"301","s":"MU","n":1,"t":"S_MU","d":0},{"c":"301","s":"PE","n":2,"t":"S_PE","d":0},{"c":"301","s":"AR","n":1,"t":"S_AR","d":0},{"c":"301","s":"CO","n":1,"t":"S_CO","d":0},{"c":"301","s":"EN","n":2,"t":"S_EN1","d":0},{"c":"301","s":"SC","n":3,"t":"S_SC","d":0},{"c":"302","s":"CH","n":6,"t":"HR_302","d":0},{"c":"302","s":"MA","n":4,"t":"HR_302","d":0},{"c":"302","s":"SO","n":3,"t":"HR_302","d":0},{"c":"302","s":"IN","n":3,"t":"HR_302","d":1},{"c":"302","s":"HE","n":1,"t":"HR_302","d":0},{"c":"302","s":"FX","n":3,"t":"HR_302","d":0},{"c":"302","s":"MU","n":1,"t":"S_MU","d":0},{"c":"302","s":"PE","n":2,"t":"S_PE","d":0},{"c":"302","s":"AR","n":1,"t":"A_STU","d":0},{"c":"302","s":"CO","n":1,"t":"A_ACA","d":0},{"c":"302","s":"EN","n":2,"t":"S_EN2","d":0},{"c":"302","s":"SC","n":3,"t":"S_SC","d":0},{"c":"401","s":"CH","n":6,"t":"HR_401","d":0},{"c":"401","s":"MA","n":4,"t":"HR_401","d":0},{"c":"401","s":"SO","n":3,"t":"HR_401","d":0},{"c":"401","s":"IN","n":3,"t":"HR_401","d":1},{"c":"401","s":"HE","n":1,"t":"HR_401","d":0},{"c":"401","s":"FX","n":3,"t":"HR_401","d":0},{"c":"401","s":"MU","n":1,"t":"S_MU","d":0},{"c":"401","s":"PE","n":2,"t":"S_PE","d":0},{"c":"401","s":"AR","n":1,"t":"S_AR","d":0},{"c":"401","s":"CO","n":1,"t":"S_CO","d":0},{"c":"401","s":"EN","n":2,"t":"S_EN1","d":0},{"c":"401","s":"SC","n":3,"t":"S_SC","d":0},{"c":"402","s":"CH","n":6,"t":"HR_402","d":0},{"c":"402","s":"MA","n":4,"t":"HR_402","d":0},{"c":"402","s":"SO","n":3,"t":"HR_402","d":0},{"c":"402","s":"IN","n":3,"t":"HR_402","d":1},{"c":"402","s":"HE","n":1,"t":"HR_402","d":0},{"c":"402","s":"FX","n":3,"t":"HR_402","d":0},{"c":"402","s":"MU","n":1,"t":"S_MU","d":0},{"c":"402","s":"PE","n":2,"t":"S_PE","d":0},{"c":"402","s":"AR","n":1,"t":"A_STU","d":0},{"c":"402","s":"CO","n":1,"t":"A_ACA","d":0},{"c":"402","s":"EN","n":2,"t":"S_EN2","d":0},{"c":"402","s":"SC","n":3,"t":"S_SC","d":0},{"c":"501","s":"CH","n":6,"t":"HR_501","d":0},{"c":"501","s":"MA","n":4,"t":"HR_501","d":0},{"c":"501","s":"SO","n":3,"t":"HR_501","d":0},{"c":"501","s":"IN","n":3,"t":"HR_501","d":1},{"c":"501","s":"HE","n":1,"t":"HR_501","d":0},{"c":"501","s":"FX","n":5,"t":"HR_501","d":0},{"c":"501","s":"MU","n":1,"t":"S_MU","d":0},{"c":"501","s":"PE","n":2,"t":"S_PE","d":0},{"c":"501","s":"AR","n":1,"t":"S_AR","d":0},{"c":"501","s":"CO","n":1,"t":"S_CO","d":0},{"c":"501","s":"EN","n":2,"t":"S_EN1","d":0},{"c":"501","s":"SC","n":3,"t":"S_SC","d":0},{"c":"502","s":"CH","n":6,"t":"HR_502","d":0},{"c":"502","s":"MA","n":4,"t":"HR_502","d":0},{"c":"502","s":"SO","n":3,"t":"HR_502","d":0},{"c":"502","s":"IN","n":3,"t":"HR_502","d":1},{"c":"502","s":"HE","n":1,"t":"HR_502","d":0},{"c":"502","s":"FX","n":5,"t":"HR_502","d":0},{"c":"502","s":"MU","n":1,"t":"S_MU","d":0},{"c":"502","s":"PE","n":2,"t":"S_PE","d":0},{"c":"502","s":"AR","n":1,"t":"A_STU","d":0},{"c":"502","s":"CO","n":1,"t":"A_ACA","d":0},{"c":"502","s":"EN","n":2,"t":"S_EN2","d":0},{"c":"502","s":"SC","n":3,"t":"S_SC","d":0},{"c":"601","s":"CH","n":6,"t":"HR_601","d":0},{"c":"601","s":"MA","n":4,"t":"HR_601","d":0},{"c":"601","s":"SO","n":3,"t":"HR_601","d":0},{"c":"601","s":"IN","n":3,"t":"HR_601","d":1},{"c":"601","s":"HE","n":1,"t":"HR_601","d":0},{"c":"601","s":"FX","n":5,"t":"HR_601","d":0},{"c":"601","s":"MU","n":1,"t":"S_MU","d":0},{"c":"601","s":"PE","n":2,"t":"S_PE","d":0},{"c":"601","s":"AR","n":1,"t":"S_AR","d":0},{"c":"601","s":"CO","n":1,"t":"S_CO","d":0},{"c":"601","s":"EN","n":2,"t":"S_EN1","d":0},{"c":"601","s":"SC","n":3,"t":"S_SC","d":0},{"c":"602","s":"CH","n":6,"t":"HR_602","d":0},{"c":"602","s":"MA","n":4,"t":"HR_602","d":0},{"c":"602","s":"SO","n":3,"t":"HR_602","d":0},{"c":"602","s":"IN","n":3,"t":"HR_602","d":1},{"c":"602","s":"HE","n":1,"t":"HR_602","d":0},{"c":"602","s":"FX","n":5,"t":"HR_602","d":0},{"c":"602","s":"MU","n":1,"t":"S_MU","d":0},{"c":"602","s":"PE","n":2,"t":"S_PE","d":0},{"c":"602","s":"AR","n":1,"t":"A_STU","d":0},{"c":"602","s":"CO","n":1,"t":"A_ACA","d":0},{"c":"602","s":"EN","n":2,"t":"S_EN2","d":0},{"c":"602","s":"SC","n":3,"t":"S_SC","d":0}],"constraints":[{"kind":"TEACHER_UNAVAILABLE","params":{"teacher":"A_ACA","days":[1],"periods":[1,2]},"hard":true,"weight":1},{"kind":"TEACHER_UNAVAILABLE","params":{"teacher":"A_STU","days":[1],"periods":[1,2]},"hard":true,"weight":1},{"kind":"HOMEROOM_DAY_CAPACITY","params":{},"hard":false,"weight":1},{"kind":"HOMEROOM_DAY_OFF","params":{},"hard":false,"weight":1},{"kind":"RESERVE_MORNING","params":{"max_per_class":4},"hard":false,"weight":1},{"kind":"SPECIAL_BALANCE","params":{"max_per_day":3},"hard":false,"weight":1},{"kind":"TEACHER_DAY_OFF","params":{"teacher":"S_EN1","day":3},"hard":false,"weight":200},{"kind":"TEACHER_UNAVAILABLE","params":{"teacher":"S_MU","days":[5],"periods":[5,6,7]},"hard":true,"weight":1},{"kind":"TEACHER_DAY_OFF","params":{"teacher":"HR_101","day":5},"hard":false,"weight":150},{"kind":"TEACHER_MAX_PER_DAY","params":{"teacher":"S_PE","max":5},"hard":false,"weight":1},{"kind":"TEACHER_MAX_PER_DAY","params":{"teacher":"S_SC","max":5},"hard":false,"weight":1},{"kind":"TEACHER_MAX_RUN","params":{"teacher":"S_PE","max":3},"hard":false,"weight":1},{"kind":"TEACHER_COMPACT","params":{"teacher":"S_MU"},"hard":false,"weight":1},{"kind":"TEACHER_COMPACT","params":{"teacher":"S_CO"},"hard":false,"weight":1},{"kind":"TEACHER_COMPACT","params":{"teacher":"S_AR"},"hard":false,"weight":1},{"kind":"SUBJECT_SPREAD","params":{"subject":"CH","max":2},"hard":false,"weight":1},{"kind":"SUBJECT_SPREAD","params":{"subject":"MA","max":1},"hard":false,"weight":1},{"kind":"SUBJECT_SPREAD","params":{"subject":"EN","max":1},"hard":false,"weight":1},{"kind":"SUBJECT_NOT_IN","params":{"subject":"PE","periods":[5]},"hard":false,"weight":1},{"kind":"CORE_IN_MORNING","params":{},"hard":false,"weight":1}],"loads":[{"id":"S_MU","name":"音樂老師","role":"special","total":12,"max":20,"cap":5,"classes":["101","102","201","202","301","302","401","402","501","502","601","602"],"subjects":["MU"]},{"id":"S_AR","name":"美勞老師","role":"special","total":6,"max":20,"cap":5,"classes":["101","201","301","401","501","601"],"subjects":["AR"]},{"id":"A_STU","name":"學務主任","role":"admin","total":6,"max":10,"cap":3,"classes":["102","202","302","402","502","602"],"subjects":["AR"]},{"id":"S_CO","name":"電腦老師","role":"special","total":6,"max":20,"cap":5,"classes":["101","201","301","401","501","601"],"subjects":["CO"]},{"id":"A_ACA","name":"教務主任","role":"admin","total":6,"max":10,"cap":3,"classes":["102","202","302","402","502","602"],"subjects":["CO"]},{"id":"S_PE","name":"體育老師","role":"special","total":24,"max":26,"cap":6,"classes":["101","102","201","202","301","302","401","402","501","502","601","602"],"subjects":["PE"]},{"id":"S_SC","name":"自然老師","role":"special","total":24,"max":26,"cap":6,"classes":["301","302","401","402","501","502","601","602"],"subjects":["SC"]},{"id":"S_EN1","name":"英語老師甲","role":"special","total":8,"max":20,"cap":5,"classes":["301","401","501","601"],"subjects":["EN"]},{"id":"S_EN2","name":"英語老師乙","role":"special","total":8,"max":20,"cap":5,"classes":["302","402","502","602"],"subjects":["EN"]},{"id":"HR_101","name":"101 導師","role":"homeroom","total":19,"max":24,"cap":6,"classes":["101"],"subjects":["CH","HE","IN","LI","MA"]},{"id":"HR_102","name":"102 導師","role":"homeroom","total":19,"max":24,"cap":6,"classes":["102"],"subjects":["CH","HE","IN","LI","MA"]},{"id":"HR_201","name":"201 導師","role":"homeroom","total":19,"max":24,"cap":6,"classes":["201"],"subjects":["CH","HE","IN","LI","MA"]},{"id":"HR_202","name":"202 導師","role":"homeroom","total":19,"max":24,"cap":6,"classes":["202"],"subjects":["CH","HE","IN","LI","MA"]},{"id":"HR_301","name":"301 導師","role":"homeroom","total":20,"max":24,"cap":6,"classes":["301"],"subjects":["CH","FX","HE","IN","MA","SO"]},{"id":"HR_302","name":"302 導師","role":"homeroom","total":20,"max":24,"cap":6,"classes":["302"],"subjects":["CH","FX","HE","IN","MA","SO"]},{"id":"HR_401","name":"401 導師","role":"homeroom","total":20,"max":24,"cap":6,"classes":["401"],"subjects":["CH","FX","HE","IN","MA","SO"]},{"id":"HR_402","name":"402 導師","role":"homeroom","total":20,"max":24,"cap":6,"classes":["402"],"subjects":["CH","FX","HE","IN","MA","SO"]},{"id":"HR_501","name":"501 導師","role":"homeroom","total":22,"max":24,"cap":6,"classes":["501"],"subjects":["CH","FX","HE","IN","MA","SO"]},{"id":"HR_502","name":"502 導師","role":"homeroom","total":22,"max":24,"cap":6,"classes":["502"],"subjects":["CH","FX","HE","IN","MA","SO"]},{"id":"HR_601","name":"601 導師","role":"homeroom","total":22,"max":24,"cap":6,"classes":["601"],"subjects":["CH","FX","HE","IN","MA","SO"]},{"id":"HR_602","name":"602 導師","role":"homeroom","total":22,"max":24,"cap":6,"classes":["602"],"subjects":["CH","FX","HE","IN","MA","SO"]}],"placements":[{"c":"501","s":"PE","t":"S_PE","r":"PE1","slot":0,"len":1,"ph":1},{"c":"201","s":"AR","t":"S_AR","r":"ART1","slot":1,"len":1,"ph":1},{"c":"301","s":"MU","t":"S_MU","r":"MUS1","slot":1,"len":1,"ph":1},{"c":"302","s":"PE","t":"S_PE","r":"PE1","slot":1,"len":1,"ph":1},{"c":"102","s":"CO","t":"A_ACA","r":"COM1","slot":2,"len":1,"ph":1},{"c":"302","s":"SC","t":"S_SC","r":"SCI1","slot":2,"len":1,"ph":1},{"c":"402","s":"EN","t":"S_EN2","r":"R402","slot":2,"len":1,"ph":1},{"c":"201","s":"PE","t":"S_PE","r":"PE1","slot":3,"len":1,"ph":1},{"c":"602","s":"SC","t":"S_SC","r":"SCI1","slot":3,"len":1,"ph":1},{"c":"201","s":"MU","t":"S_MU","r":"MUS1","slot":4,"len":1,"ph":1},{"c":"302","s":"SC","t":"S_SC","r":"SCI1","slot":4,"len":1,"ph":1},{"c":"501","s":"EN","t":"S_EN1","r":"R501","slot":4,"len":1,"ph":1},{"c":"601","s":"AR","t":"S_AR","r":"ART1","slot":4,"len":1,"ph":1},{"c":"202","s":"PE","t":"S_PE","r":"PE1","slot":5,"len":1,"ph":1},{"c":"301","s":"AR","t":"S_AR","r":"ART1","slot":5,"len":1,"ph":1},{"c":"401","s":"EN","t":"S_EN1","r":"R401","slot":5,"len":1,"ph":1},{"c":"502","s":"EN","t":"S_EN2","r":"R502","slot":5,"len":1,"ph":1},{"c":"601","s":"MU","t":"S_MU","r":"MUS1","slot":5,"len":1,"ph":1},{"c":"602","s":"SC","t":"S_SC","r":"SCI1","slot":5,"len":1,"ph":1},{"c":"301","s":"CO","t":"S_CO","r":"COM1","slot":6,"len":1,"ph":1},{"c":"401","s":"PE","t":"S_PE","r":"PE1","slot":6,"len":1,"ph":1},{"c":"502","s":"MU","t":"S_MU","r":"MUS1","slot":6,"len":1,"ph":1},{"c":"601","s":"SC","t":"S_SC","r":"SCI1","slot":6,"len":1,"ph":1},{"c":"602","s":"AR","t":"A_STU","r":"ART1","slot":6,"len":1,"ph":1},{"c":"601","s":"PE","t":"S_PE","r":"PE1","slot":7,"len":1,"ph":1},{"c":"301","s":"PE","t":"S_PE","r":"PE1","slot":8,"len":1,"ph":1},{"c":"302","s":"CO","t":"A_ACA","r":"COM1","slot":8,"len":1,"ph":1},{"c":"502","s":"SC","t":"S_SC","r":"SCI1","slot":8,"len":1,"ph":1},{"c":"102","s":"PE","t":"S_PE","r":"PE1","slot":9,"len":1,"ph":1},{"c":"401","s":"EN","t":"S_EN1","r":"R401","slot":9,"len":1,"ph":1},{"c":"102","s":"MU","t":"S_MU","r":"MUS1","slot":10,"len":1,"ph":1},{"c":"502","s":"AR","t":"A_STU","r":"ART1","slot":10,"len":1,"ph":1},{"c":"602","s":"EN","t":"S_EN2","r":"R602","slot":10,"len":1,"ph":1},{"c":"202","s":"AR","t":"A_STU","r":"ART1","slot":11,"len":1,"ph":1},{"c":"302","s":"MU","t":"S_MU","r":"MUS1","slot":11,"len":1,"ph":1},{"c":"401","s":"SC","t":"S_SC","r":"SCI1","slot":11,"len":1,"ph":1},{"c":"402","s":"EN","t":"S_EN2","r":"R402","slot":11,"len":1,"ph":1},{"c":"401","s":"MU","t":"S_MU","r":"MUS1","slot":12,"len":1,"ph":1},{"c":"402","s":"PE","t":"S_PE","r":"PE1","slot":12,"len":1,"ph":1},{"c":"501","s":"SC","t":"S_SC","r":"SCI1","slot":12,"len":1,"ph":1},{"c":"502","s":"CO","t":"A_ACA","r":"COM1","slot":12,"len":1,"ph":1},{"c":"301","s":"EN","t":"S_EN1","r":"R301","slot":13,"len":1,"ph":1},{"c":"302","s":"SC","t":"S_SC","r":"SCI1","slot":13,"len":1,"ph":1},{"c":"402","s":"MU","t":"S_MU","r":"MUS1","slot":13,"len":1,"ph":1},{"c":"501","s":"PE","t":"S_PE","r":"PE1","slot":13,"len":1,"ph":1},{"c":"601","s":"CO","t":"S_CO","r":"COM1","slot":13,"len":1,"ph":1},{"c":"202","s":"PE","t":"S_PE","r":"PE1","slot":14,"len":1,"ph":1},{"c":"601","s":"SC","t":"S_SC","r":"SCI1","slot":14,"len":1,"ph":1},{"c":"302","s":"PE","t":"S_PE","r":"PE1","slot":15,"len":1,"ph":1},{"c":"402","s":"SC","t":"S_SC","r":"SCI1","slot":15,"len":1,"ph":1},{"c":"502","s":"EN","t":"S_EN2","r":"R502","slot":15,"len":1,"ph":1},{"c":"501","s":"SC","t":"S_SC","r":"SCI1","slot":16,"len":1,"ph":1},{"c":"201","s":"PE","t":"S_PE","r":"PE1","slot":17,"len":1,"ph":1},{"c":"401","s":"SC","t":"S_SC","r":"SCI1","slot":17,"len":1,"ph":1},{"c":"501","s":"CO","t":"S_CO","r":"COM1","slot":17,"len":1,"ph":1},{"c":"502","s":"PE","t":"S_PE","r":"PE1","slot":18,"len":1,"ph":1},{"c":"601","s":"SC","t":"S_SC","r":"SCI1","slot":18,"len":1,"ph":1},{"c":"602","s":"EN","t":"S_EN2","r":"R602","slot":18,"len":1,"ph":1},{"c":"501","s":"AR","t":"S_AR","r":"ART1","slot":21,"len":1,"ph":1},{"c":"502","s":"PE","t":"S_PE","r":"PE1","slot":21,"len":1,"ph":1},{"c":"102","s":"PE","t":"S_PE","r":"PE1","slot":22,"len":1,"ph":1},{"c":"301","s":"SC","t":"S_SC","r":"SCI1","slot":22,"len":1,"ph":1},{"c":"602","s":"SC","t":"S_SC","r":"SCI1","slot":23,"len":1,"ph":1},{"c":"402","s":"PE","t":"S_PE","r":"PE1","slot":24,"len":1,"ph":1},{"c":"102","s":"AR","t":"A_STU","r":"ART1","slot":25,"len":1,"ph":1},{"c":"202","s":"MU","t":"S_MU","r":"MUS1","slot":25,"len":1,"ph":1},{"c":"301","s":"EN","t":"S_EN1","r":"R301","slot":25,"len":1,"ph":1},{"c":"501","s":"SC","t":"S_SC","r":"SCI1","slot":25,"len":1,"ph":1},{"c":"602","s":"CO","t":"A_ACA","r":"COM1","slot":25,"len":1,"ph":1},{"c":"302","s":"EN","t":"S_EN2","r":"R302","slot":26,"len":1,"ph":1},{"c":"401","s":"AR","t":"S_AR","r":"ART1","slot":26,"len":1,"ph":1},{"c":"402","s":"CO","t":"A_ACA","r":"COM1","slot":26,"len":1,"ph":1},{"c":"502","s":"SC","t":"S_SC","r":"SCI1","slot":26,"len":1,"ph":1},{"c":"601","s":"PE","t":"S_PE","r":"PE1","slot":26,"len":1,"ph":1},{"c":"602","s":"MU","t":"S_MU","r":"MUS1","slot":26,"len":1,"ph":1},{"c":"301","s":"PE","t":"S_PE","r":"PE1","slot":27,"len":1,"ph":1},{"c":"401","s":"SC","t":"S_SC","r":"SCI1","slot":27,"len":1,"ph":1},{"c":"501","s":"MU","t":"S_MU","r":"MUS1","slot":27,"len":1,"ph":1},{"c":"601","s":"EN","t":"S_EN1","r":"R601","slot":27,"len":1,"ph":1},{"c":"101","s":"AR","t":"S_AR","r":"ART1","slot":28,"len":1,"ph":1},{"c":"202","s":"CO","t":"A_ACA","r":"COM1","slot":29,"len":1,"ph":1},{"c":"402","s":"SC","t":"S_SC","r":"SCI1","slot":29,"len":1,"ph":1},{"c":"602","s":"PE","t":"S_PE","r":"PE1","slot":29,"len":1,"ph":1},{"c":"101","s":"MU","t":"S_MU","r":"MUS1","slot":30,"len":1,"ph":1},{"c":"401","s":"PE","t":"S_PE","r":"PE1","slot":30,"len":1,"ph":1},{"c":"101","s":"PE","t":"S_PE","r":"PE1","slot":31,"len":1,"ph":1},{"c":"301","s":"SC","t":"S_SC","r":"SCI1","slot":31,"len":1,"ph":1},{"c":"101","s":"CO","t":"S_CO","r":"COM1","slot":32,"len":1,"ph":1},{"c":"301","s":"SC","t":"S_SC","r":"SCI1","slot":32,"len":1,"ph":1},{"c":"302","s":"EN","t":"S_EN2","r":"R302","slot":32,"len":1,"ph":1},{"c":"402","s":"AR","t":"A_STU","r":"ART1","slot":32,"len":1,"ph":1},{"c":"601","s":"EN","t":"S_EN1","r":"R601","slot":32,"len":1,"ph":1},{"c":"101","s":"PE","t":"S_PE","r":"PE1","slot":33,"len":1,"ph":1},{"c":"201","s":"CO","t":"S_CO","r":"COM1","slot":33,"len":1,"ph":1},{"c":"302","s":"AR","t":"A_STU","r":"ART1","slot":33,"len":1,"ph":1},{"c":"402","s":"SC","t":"S_SC","r":"SCI1","slot":33,"len":1,"ph":1},{"c":"401","s":"CO","t":"S_CO","r":"COM1","slot":34,"len":1,"ph":1},{"c":"501","s":"EN","t":"S_EN1","r":"R501","slot":34,"len":1,"ph":1},{"c":"502","s":"SC","t":"S_SC","r":"SCI1","slot":34,"len":1,"ph":1},{"c":"602","s":"PE","t":"S_PE","r":"PE1","slot":34,"len":1,"ph":1},{"c":"101","s":"HE","t":"HR_101","r":"R101","slot":0,"len":1,"ph":2},{"c":"101","s":"CH","t":"HR_101","r":"R101","slot":1,"len":1,"ph":2},{"c":"101","s":"CH","t":"HR_101","r":"R101","slot":2,"len":1,"ph":2},{"c":"101","s":"MA","t":"HR_101","r":"R101","slot":3,"len":1,"ph":2},{"c":"101","s":"LI","t":"HR_101","r":"R101","slot":4,"len":1,"ph":2},{"c":"101","s":"CH","t":"HR_101","r":"R101","slot":8,"len":1,"ph":2},{"c":"101","s":"CH","t":"HR_101","r":"R101","slot":9,"len":1,"ph":2},{"c":"101","s":"MA","t":"HR_101","r":"R101","slot":10,"len":1,"ph":2},{"c":"101","s":"LI","t":"HR_101","r":"R101","slot":11,"len":2,"ph":2},{"c":"101","s":"LI","t":"HR_101","r":"R101","slot":14,"len":1,"ph":2},{"c":"101","s":"CH","t":"HR_101","r":"R101","slot":15,"len":1,"ph":2},{"c":"101","s":"MA","t":"HR_101","r":"R101","slot":16,"len":1,"ph":2},{"c":"101","s":"CH","t":"HR_101","r":"R101","slot":17,"len":1,"ph":2},{"c":"101","s":"MA","t":"HR_101","r":"R101","slot":21,"len":1,"ph":2},{"c":"101","s":"CH","t":"HR_101","r":"R101","slot":22,"len":1,"ph":2},{"c":"101","s":"CH","t":"HR_101","r":"R101","slot":23,"len":1,"ph":2},{"c":"101","s":"IN","t":"HR_101","r":"R101","slot":25,"len":2,"ph":2},{"c":"102","s":"LI","t":"HR_102","r":"R102","slot":0,"len":1,"ph":2},{"c":"102","s":"MA","t":"HR_102","r":"R102","slot":1,"len":1,"ph":2},{"c":"102","s":"CH","t":"HR_102","r":"R102","slot":3,"len":1,"ph":2},{"c":"102","s":"LI","t":"HR_102","r":"R102","slot":4,"len":2,"ph":2},{"c":"102","s":"HE","t":"HR_102","r":"R102","slot":7,"len":1,"ph":2},{"c":"102","s":"CH","t":"HR_102","r":"R102","slot":8,"len":1,"ph":2},{"c":"102","s":"LI","t":"HR_102","r":"R102","slot":11,"len":1,"ph":2},{"c":"102","s":"CH","t":"HR_102","r":"R102","slot":15,"len":1,"ph":2},{"c":"102","s":"CH","t":"HR_102","r":"R102","slot":16,"len":1,"ph":2},{"c":"102","s":"MA","t":"HR_102","r":"R102","slot":17,"len":1,"ph":2},{"c":"102","s":"MA","t":"HR_102","r":"R102","slot":21,"len":1,"ph":2},{"c":"102","s":"CH","t":"HR_102","r":"R102","slot":23,"len":1,"ph":2},{"c":"102","s":"CH","t":"HR_102","r":"R102","slot":24,"len":1,"ph":2},{"c":"102","s":"CH","t":"HR_102","r":"R102","slot":28,"len":1,"ph":2},{"c":"102","s":"CH","t":"HR_102","r":"R102","slot":29,"len":1,"ph":2},{"c":"102","s":"MA","t":"HR_102","r":"R102","slot":31,"len":1,"ph":2},{"c":"102","s":"IN","t":"HR_102","r":"R102","slot":32,"len":2,"ph":2},{"c":"201","s":"MA","t":"HR_201","r":"R201","slot":0,"len":1,"ph":2},{"c":"201","s":"CH","t":"HR_201","r":"R201","slot":2,"len":1,"ph":2},{"c":"201","s":"CH","t":"HR_201","r":"R201","slot":7,"len":1,"ph":2},{"c":"201","s":"MA","t":"HR_201","r":"R201","slot":8,"len":1,"ph":2},{"c":"201","s":"HE","t":"HR_201","r":"R201","slot":9,"len":1,"ph":2},{"c":"201","s":"CH","t":"HR_201","r":"R201","slot":10,"len":1,"ph":2},{"c":"201","s":"IN","t":"HR_201","r":"R201","slot":11,"len":2,"ph":2},{"c":"201","s":"LI","t":"HR_201","r":"R201","slot":14,"len":2,"ph":2},{"c":"201","s":"CH","t":"HR_201","r":"R201","slot":16,"len":1,"ph":2},{"c":"201","s":"CH","t":"HR_201","r":"R201","slot":22,"len":1,"ph":2},{"c":"201","s":"CH","t":"HR_201","r":"R201","slot":23,"len":1,"ph":2},{"c":"201","s":"MA","t":"HR_201","r":"R201","slot":24,"len":1,"ph":2},{"c":"201","s":"LI","t":"HR_201","r":"R201","slot":25,"len":1,"ph":2},{"c":"201","s":"LI","t":"HR_201","r":"R201","slot":26,"len":1,"ph":2},{"c":"201","s":"CH","t":"HR_201","r":"R201","slot":28,"len":1,"ph":2},{"c":"201","s":"CH","t":"HR_201","r":"R201","slot":30,"len":1,"ph":2},{"c":"201","s":"MA","t":"HR_201","r":"R201","slot":31,"len":1,"ph":2},{"c":"202","s":"MA","t":"HR_202","r":"R202","slot":0,"len":1,"ph":2},{"c":"202","s":"CH","t":"HR_202","r":"R202","slot":1,"len":1,"ph":2},{"c":"202","s":"CH","t":"HR_202","r":"R202","slot":2,"len":1,"ph":2},{"c":"202","s":"LI","t":"HR_202","r":"R202","slot":3,"len":1,"ph":2},{"c":"202","s":"LI","t":"HR_202","r":"R202","slot":4,"len":1,"ph":2},{"c":"202","s":"LI","t":"HR_202","r":"R202","slot":7,"len":2,"ph":2},{"c":"202","s":"MA","t":"HR_202","r":"R202","slot":9,"len":1,"ph":2},{"c":"202","s":"MA","t":"HR_202","r":"R202","slot":15,"len":1,"ph":2},{"c":"202","s":"CH","t":"HR_202","r":"R202","slot":16,"len":1,"ph":2},{"c":"202","s":"CH","t":"HR_202","r":"R202","slot":17,"len":1,"ph":2},{"c":"202","s":"MA","t":"HR_202","r":"R202","slot":21,"len":1,"ph":2},{"c":"202","s":"CH","t":"HR_202","r":"R202","slot":22,"len":1,"ph":2},{"c":"202","s":"CH","t":"HR_202","r":"R202","slot":23,"len":1,"ph":2},{"c":"202","s":"HE","t":"HR_202","r":"R202","slot":28,"len":1,"ph":2},{"c":"202","s":"CH","t":"HR_202","r":"R202","slot":30,"len":1,"ph":2},{"c":"202","s":"CH","t":"HR_202","r":"R202","slot":31,"len":1,"ph":2},{"c":"202","s":"IN","t":"HR_202","r":"R202","slot":32,"len":2,"ph":2},{"c":"301","s":"CH","t":"HR_301","r":"R301","slot":0,"len":1,"ph":2},{"c":"301","s":"IN","t":"HR_301","r":"R301","slot":2,"len":1,"ph":2},{"c":"301","s":"CH","t":"HR_301","r":"R301","slot":3,"len":1,"ph":2},{"c":"301","s":"HE","t":"HR_301","r":"R301","slot":4,"len":1,"ph":2},{"c":"301","s":"MA","t":"HR_301","r":"R301","slot":7,"len":1,"ph":2},{"c":"301","s":"IN","t":"HR_301","r":"R301","slot":9,"len":2,"ph":2},{"c":"301","s":"SO","t":"HR_301","r":"R301","slot":11,"len":1,"ph":2},{"c":"301","s":"SO","t":"HR_301","r":"R301","slot":12,"len":1,"ph":2},{"c":"301","s":"SO","t":"HR_301","r":"R301","slot":14,"len":1,"ph":2},{"c":"301","s":"MA","t":"HR_301","r":"R301","slot":15,"len":1,"ph":2},{"c":"301","s":"CH","t":"HR_301","r":"R301","slot":16,"len":1,"ph":2},{"c":"301","s":"CH","t":"HR_301","r":"R301","slot":17,"len":1,"ph":2},{"c":"301","s":"MA","t":"HR_301","r":"R301","slot":21,"len":1,"ph":2},{"c":"301","s":"CH","t":"HR_301","r":"R301","slot":23,"len":1,"ph":2},{"c":"301","s":"FX","t":"HR_301","r":"R301","slot":24,"len":1,"ph":2},{"c":"301","s":"FX","t":"HR_301","r":"R301","slot":26,"len":1,"ph":2},{"c":"301","s":"CH","t":"HR_301","r":"R301","slot":28,"len":1,"ph":2},{"c":"301","s":"MA","t":"HR_301","r":"R301","slot":30,"len":1,"ph":2},{"c":"301","s":"FX","t":"HR_301","r":"R301","slot":33,"len":1,"ph":2},{"c":"302","s":"FX","t":"HR_302","r":"R302","slot":0,"len":1,"ph":2},{"c":"302","s":"CH","t":"HR_302","r":"R302","slot":3,"len":1,"ph":2},{"c":"302","s":"IN","t":"HR_302","r":"R302","slot":5,"len":2,"ph":2},{"c":"302","s":"CH","t":"HR_302","r":"R302","slot":7,"len":1,"ph":2},{"c":"302","s":"FX","t":"HR_302","r":"R302","slot":9,"len":1,"ph":2},{"c":"302","s":"MA","t":"HR_302","r":"R302","slot":10,"len":1,"ph":2},{"c":"302","s":"SO","t":"HR_302","r":"R302","slot":14,"len":1,"ph":2},{"c":"302","s":"MA","t":"HR_302","r":"R302","slot":16,"len":1,"ph":2},{"c":"302","s":"CH","t":"HR_302","r":"R302","slot":17,"len":1,"ph":2},{"c":"302","s":"CH","t":"HR_302","r":"R302","slot":21,"len":1,"ph":2},{"c":"302","s":"CH","t":"HR_302","r":"R302","slot":22,"len":1,"ph":2},{"c":"302","s":"FX","t":"HR_302","r":"R302","slot":23,"len":1,"ph":2},{"c":"302","s":"MA","t":"HR_302","r":"R302","slot":24,"len":1,"ph":2},{"c":"302","s":"SO","t":"HR_302","r":"R302","slot":25,"len":1,"ph":2},{"c":"302","s":"SO","t":"HR_302","r":"R302","slot":28,"len":1,"ph":2},{"c":"302","s":"HE","t":"HR_302","r":"R302","slot":29,"len":1,"ph":2},{"c":"302","s":"CH","t":"HR_302","r":"R302","slot":30,"len":1,"ph":2},{"c":"302","s":"MA","t":"HR_302","r":"R302","slot":31,"len":1,"ph":2},{"c":"302","s":"IN","t":"HR_302","r":"R302","slot":34,"len":1,"ph":2},{"c":"401","s":"MA","t":"HR_401","r":"R401","slot":0,"len":1,"ph":2},{"c":"401","s":"SO","t":"HR_401","r":"R401","slot":1,"len":1,"ph":2},{"c":"401","s":"CH","t":"HR_401","r":"R401","slot":2,"len":1,"ph":2},{"c":"401","s":"HE","t":"HR_401","r":"R401","slot":3,"len":1,"ph":2},{"c":"401","s":"IN","t":"HR_401","r":"R401","slot":4,"len":1,"ph":2},{"c":"401","s":"IN","t":"HR_401","r":"R401","slot":7,"len":2,"ph":2},{"c":"401","s":"SO","t":"HR_401","r":"R401","slot":10,"len":1,"ph":2},{"c":"401","s":"SO","t":"HR_401","r":"R401","slot":14,"len":1,"ph":2},{"c":"401","s":"MA","t":"HR_401","r":"R401","slot":15,"len":1,"ph":2},{"c":"401","s":"CH","t":"HR_401","r":"R401","slot":16,"len":1,"ph":2},{"c":"401","s":"MA","t":"HR_401","r":"R401","slot":21,"len":1,"ph":2},{"c":"401","s":"FX","t":"HR_401","r":"R401","slot":22,"len":1,"ph":2},{"c":"401","s":"CH","t":"HR_401","r":"R401","slot":23,"len":1,"ph":2},{"c":"401","s":"CH","t":"HR_401","r":"R401","slot":24,"len":1,"ph":2},{"c":"401","s":"FX","t":"HR_401","r":"R401","slot":25,"len":1,"ph":2},{"c":"401","s":"MA","t":"HR_401","r":"R401","slot":28,"len":1,"ph":2},{"c":"401","s":"CH","t":"HR_401","r":"R401","slot":29,"len":1,"ph":2},{"c":"401","s":"CH","t":"HR_401","r":"R401","slot":31,"len":1,"ph":2},{"c":"401","s":"FX","t":"HR_401","r":"R401","slot":32,"len":1,"ph":2},{"c":"402","s":"FX","t":"HR_402","r":"R402","slot":0,"len":1,"ph":2},{"c":"402","s":"FX","t":"HR_402","r":"R402","slot":1,"len":1,"ph":2},{"c":"402","s":"MA","t":"HR_402","r":"R402","slot":3,"len":1,"ph":2},{"c":"402","s":"HE","t":"HR_402","r":"R402","slot":4,"len":1,"ph":2},{"c":"402","s":"IN","t":"HR_402","r":"R402","slot":5,"len":1,"ph":2},{"c":"402","s":"SO","t":"HR_402","r":"R402","slot":6,"len":1,"ph":2},{"c":"402","s":"IN","t":"HR_402","r":"R402","slot":7,"len":2,"ph":2},{"c":"402","s":"MA","t":"HR_402","r":"R402","slot":9,"len":1,"ph":2},{"c":"402","s":"CH","t":"HR_402","r":"R402","slot":10,"len":1,"ph":2},{"c":"402","s":"SO","t":"HR_402","r":"R402","slot":14,"len":1,"ph":2},{"c":"402","s":"CH","t":"HR_402","r":"R402","slot":16,"len":1,"ph":2},{"c":"402","s":"MA","t":"HR_402","r":"R402","slot":17,"len":1,"ph":2},{"c":"402","s":"CH","t":"HR_402","r":"R402","slot":21,"len":1,"ph":2},{"c":"402","s":"SO","t":"HR_402","r":"R402","slot":22,"len":1,"ph":2},{"c":"402","s":"CH","t":"HR_402","r":"R402","slot":23,"len":1,"ph":2},{"c":"402","s":"FX","t":"HR_402","r":"R402","slot":25,"len":1,"ph":2},{"c":"402","s":"MA","t":"HR_402","r":"R402","slot":28,"len":1,"ph":2},{"c":"402","s":"CH","t":"HR_402","r":"R402","slot":30,"len":1,"ph":2},{"c":"402","s":"CH","t":"HR_402","r":"R402","slot":31,"len":1,"ph":2},{"c":"501","s":"CH","t":"HR_501","r":"R501","slot":1,"len":1,"ph":2},{"c":"501","s":"MA","t":"HR_501","r":"R501","slot":2,"len":1,"ph":2},{"c":"501","s":"CH","t":"HR_501","r":"R501","slot":3,"len":1,"ph":2},{"c":"501","s":"FX","t":"HR_501","r":"R501","slot":5,"len":1,"ph":2},{"c":"501","s":"FX","t":"HR_501","r":"R501","slot":6,"len":1,"ph":2},{"c":"501","s":"SO","t":"HR_501","r":"R501","slot":7,"len":1,"ph":2},{"c":"501","s":"IN","t":"HR_501","r":"R501","slot":8,"len":1,"ph":2},{"c":"501","s":"CH","t":"HR_501","r":"R501","slot":9,"len":1,"ph":2},{"c":"501","s":"FX","t":"HR_501","r":"R501","slot":11,"len":1,"ph":2},{"c":"501","s":"MA","t":"HR_501","r":"R501","slot":14,"len":1,"ph":2},{"c":"501","s":"SO","t":"HR_501","r":"R501","slot":15,"len":1,"ph":2},{"c":"501","s":"FX","t":"HR_501","r":"R501","slot":18,"len":1,"ph":2},{"c":"501","s":"MA","t":"HR_501","r":"R501","slot":22,"len":1,"ph":2},{"c":"501","s":"CH","t":"HR_501","r":"R501","slot":23,"len":1,"ph":2},{"c":"501","s":"CH","t":"HR_501","r":"R501","slot":24,"len":1,"ph":2},{"c":"501","s":"SO","t":"HR_501","r":"R501","slot":26,"len":1,"ph":2},{"c":"501","s":"IN","t":"HR_501","r":"R501","slot":28,"len":2,"ph":2},{"c":"501","s":"MA","t":"HR_501","r":"R501","slot":30,"len":1,"ph":2},{"c":"501","s":"CH","t":"HR_501","r":"R501","slot":31,"len":1,"ph":2},{"c":"501","s":"FX","t":"HR_501","r":"R501","slot":32,"len":1,"ph":2},{"c":"501","s":"HE","t":"HR_501","r":"R501","slot":33,"len":1,"ph":2},{"c":"502","s":"MA","t":"HR_502","r":"R502","slot":0,"len":1,"ph":2},{"c":"502","s":"HE","t":"HR_502","r":"R502","slot":1,"len":1,"ph":2},{"c":"502","s":"CH","t":"HR_502","r":"R502","slot":2,"len":1,"ph":2},{"c":"502","s":"CH","t":"HR_502","r":"R502","slot":3,"len":1,"ph":2},{"c":"502","s":"FX","t":"HR_502","r":"R502","slot":4,"len":1,"ph":2},{"c":"502","s":"FX","t":"HR_502","r":"R502","slot":7,"len":1,"ph":2},{"c":"502","s":"CH","t":"HR_502","r":"R502","slot":9,"len":1,"ph":2},{"c":"502","s":"FX","t":"HR_502","r":"R502","slot":11,"len":1,"ph":2},{"c":"502","s":"FX","t":"HR_502","r":"R502","slot":13,"len":1,"ph":2},{"c":"502","s":"MA","t":"HR_502","r":"R502","slot":14,"len":1,"ph":2},{"c":"502","s":"IN","t":"HR_502","r":"R502","slot":16,"len":2,"ph":2},{"c":"502","s":"MA","t":"HR_502","r":"R502","slot":22,"len":1,"ph":2},{"c":"502","s":"SO","t":"HR_502","r":"R502","slot":23,"len":1,"ph":2},{"c":"502","s":"CH","t":"HR_502","r":"R502","slot":24,"len":1,"ph":2},{"c":"502","s":"FX","t":"HR_502","r":"R502","slot":25,"len":1,"ph":2},{"c":"502","s":"SO","t":"HR_502","r":"R502","slot":28,"len":1,"ph":2},{"c":"502","s":"CH","t":"HR_502","r":"R502","slot":29,"len":1,"ph":2},{"c":"502","s":"MA","t":"HR_502","r":"R502","slot":30,"len":1,"ph":2},{"c":"502","s":"CH","t":"HR_502","r":"R502","slot":31,"len":1,"ph":2},{"c":"502","s":"SO","t":"HR_502","r":"R502","slot":32,"len":1,"ph":2},{"c":"502","s":"IN","t":"HR_502","r":"R502","slot":33,"len":1,"ph":2},{"c":"601","s":"CH","t":"HR_601","r":"R601","slot":0,"len":1,"ph":2},{"c":"601","s":"IN","t":"HR_601","r":"R601","slot":1,"len":1,"ph":2},{"c":"601","s":"FX","t":"HR_601","r":"R601","slot":2,"len":1,"ph":2},{"c":"601","s":"CH","t":"HR_601","r":"R601","slot":3,"len":1,"ph":2},{"c":"601","s":"MA","t":"HR_601","r":"R601","slot":8,"len":1,"ph":2},{"c":"601","s":"IN","t":"HR_601","r":"R601","slot":9,"len":2,"ph":2},{"c":"601","s":"FX","t":"HR_601","r":"R601","slot":11,"len":1,"ph":2},{"c":"601","s":"FX","t":"HR_601","r":"R601","slot":12,"len":1,"ph":2},{"c":"601","s":"SO","t":"HR_601","r":"R601","slot":15,"len":1,"ph":2},{"c":"601","s":"SO","t":"HR_601","r":"R601","slot":16,"len":1,"ph":2},{"c":"601","s":"MA","t":"HR_601","r":"R601","slot":17,"len":1,"ph":2},{"c":"601","s":"MA","t":"HR_601","r":"R601","slot":21,"len":1,"ph":2},{"c":"601","s":"CH","t":"HR_601","r":"R601","slot":22,"len":1,"ph":2},{"c":"601","s":"CH","t":"HR_601","r":"R601","slot":23,"len":1,"ph":2},{"c":"601","s":"SO","t":"HR_601","r":"R601","slot":24,"len":1,"ph":2},{"c":"601","s":"FX","t":"HR_601","r":"R601","slot":28,"len":1,"ph":2},{"c":"601","s":"CH","t":"HR_601","r":"R601","slot":29,"len":1,"ph":2},{"c":"601","s":"CH","t":"HR_601","r":"R601","slot":30,"len":1,"ph":2},{"c":"601","s":"MA","t":"HR_601","r":"R601","slot":31,"len":1,"ph":2},{"c":"601","s":"FX","t":"HR_601","r":"R601","slot":33,"len":1,"ph":2},{"c":"601","s":"HE","t":"HR_601","r":"R601","slot":34,"len":1,"ph":2},{"c":"602","s":"FX","t":"HR_602","r":"R602","slot":0,"len":1,"ph":2},{"c":"602","s":"IN","t":"HR_602","r":"R602","slot":1,"len":1,"ph":2},{"c":"602","s":"CH","t":"HR_602","r":"R602","slot":2,"len":1,"ph":2},{"c":"602","s":"FX","t":"HR_602","r":"R602","slot":4,"len":1,"ph":2},{"c":"602","s":"FX","t":"HR_602","r":"R602","slot":7,"len":1,"ph":2},{"c":"602","s":"MA","t":"HR_602","r":"R602","slot":8,"len":1,"ph":2},{"c":"602","s":"CH","t":"HR_602","r":"R602","slot":9,"len":1,"ph":2},{"c":"602","s":"HE","t":"HR_602","r":"R602","slot":11,"len":1,"ph":2},{"c":"602","s":"FX","t":"HR_602","r":"R602","slot":12,"len":1,"ph":2},{"c":"602","s":"SO","t":"HR_602","r":"R602","slot":13,"len":1,"ph":2},{"c":"602","s":"IN","t":"HR_602","r":"R602","slot":14,"len":2,"ph":2},{"c":"602","s":"MA","t":"HR_602","r":"R602","slot":16,"len":1,"ph":2},{"c":"602","s":"SO","t":"HR_602","r":"R602","slot":17,"len":1,"ph":2},{"c":"602","s":"MA","t":"HR_602","r":"R602","slot":21,"len":1,"ph":2},{"c":"602","s":"CH","t":"HR_602","r":"R602","slot":22,"len":1,"ph":2},{"c":"602","s":"CH","t":"HR_602","r":"R602","slot":24,"len":1,"ph":2},{"c":"602","s":"MA","t":"HR_602","r":"R602","slot":28,"len":1,"ph":2},{"c":"602","s":"CH","t":"HR_602","r":"R602","slot":30,"len":1,"ph":2},{"c":"602","s":"CH","t":"HR_602","r":"R602","slot":31,"len":1,"ph":2},{"c":"602","s":"SO","t":"HR_602","r":"R602","slot":32,"len":1,"ph":2},{"c":"602","s":"FX","t":"HR_602","r":"R602","slot":33,"len":1,"ph":2}],"handoff":{"good":{"101":{"free":23,"need":19,"morning_free":17,"core_need":12,"core_fits_morning":true,"per_day":[6,6,4,6,1],"day_spread":5,"double_slots":15,"cap":6,"usable":23,"over":[false,false,false,false,false]},"102":{"free":23,"need":19,"morning_free":16,"core_need":12,"core_fits_morning":true,"per_day":[5,4,4,4,6],"day_spread":2,"double_slots":12,"cap":6,"usable":23,"over":[false,false,false,false,false]},"201":{"free":23,"need":19,"morning_free":17,"core_need":12,"core_fits_morning":true,"per_day":[3,6,3,6,5],"day_spread":3,"double_slots":13,"cap":6,"usable":23,"over":[false,false,false,false,false]},"202":{"free":23,"need":19,"morning_free":18,"core_need":12,"core_fits_morning":true,"per_day":[5,5,3,5,5],"day_spread":2,"double_slots":13,"cap":6,"usable":23,"over":[false,false,false,false,false]},"301":{"free":22,"need":20,"morning_free":16,"core_need":10,"core_fits_morning":true,"per_day":[4,5,4,4,5],"day_spread":1,"double_slots":10,"cap":6,"usable":22,"over":[false,false,false,false,false]},"302":{"free":22,"need":20,"morning_free":16,"core_need":10,"core_fits_morning":true,"per_day":[4,4,3,6,5],"day_spread":3,"double_slots":9,"cap":6,"usable":22,"over":[false,false,false,false,false]},"401":{"free":22,"need":20,"morning_free":17,"core_need":10,"core_fits_morning":true,"per_day":[5,4,3,5,5],"day_spread":2,"double_slots":11,"cap":6,"usable":22,"over":[false,false,false,false,false]},"402":{"free":22,"need":20,"morning_free":16,"core_need":10,"core_fits_morning":true,"per_day":[6,4,3,5,4],"day_spread":3,"double_slots":10,"cap":6,"usable":22,"over":[false,false,false,false,false]},"501":{"free":23,"need":22,"morning_free":16,"core_need":10,"core_fits_morning":true,"per_day":[5,5,3,4,6],"day_spread":3,"double_slots":13,"cap":6,"usable":23,"over":[false,false,false,false,false]},"502":{"free":23,"need":22,"morning_free":16,"core_need":10,"core_fits_morning":true,"per_day":[5,4,3,5,6],"day_spread":3,"double_slots":10,"cap":6,"usable":23,"over":[false,false,false,false,false]},"601":{"free":23,"need":22,"morning_free":18,"core_need":10,"core_fits_morning":true,"per_day":[4,5,3,5,6],"day_spread":3,"double_slots":15,"cap":6,"usable":23,"over":[false,false,false,false,false]},"602":{"free":23,"need":22,"morning_free":16,"core_need":10,"core_fits_morning":true,"per_day":[4,6,4,4,5],"day_spread":2,"double_slots":12,"cap":6,"usable":23,"over":[false,false,false,false,false]}},"bad":{"101":{"free":23,"need":19,"morning_free":15,"core_need":12,"core_fits_morning":true,"per_day":[5,6,4,3,5],"day_spread":3,"double_slots":13,"cap":6,"usable":23,"over":[false,false,false,false,false]},"102":{"free":23,"need":19,"morning_free":16,"core_need":12,"core_fits_morning":true,"per_day":[5,5,3,6,4],"day_spread":3,"double_slots":12,"cap":6,"usable":23,"over":[false,false,false,false,false]},"201":{"free":23,"need":19,"morning_free":15,"core_need":12,"core_fits_morning":true,"per_day":[5,5,4,4,5],"day_spread":1,"double_slots":11,"cap":6,"usable":23,"over":[false,false,false,false,false]},"202":{"free":23,"need":19,"morning_free":17,"core_need":12,"core_fits_morning":true,"per_day":[4,4,4,6,5],"day_spread":2,"double_slots":13,"cap":6,"usable":23,"over":[false,false,false,false,false]},"301":{"free":22,"need":20,"morning_free":14,"core_need":10,"core_fits_morning":true,"per_day":[3,5,4,5,5],"day_spread":2,"double_slots":12,"cap":6,"usable":22,"over":[false,false,false,false,false]},"302":{"free":22,"need":20,"morning_free":13,"core_need":10,"core_fits_morning":true,"per_day":[6,3,2,4,7],"day_spread":5,"double_slots":10,"cap":6,"usable":21,"over":[false,false,false,false,true]},"401":{"free":22,"need":20,"morning_free":12,"core_need":10,"core_fits_morning":true,"per_day":[1,6,1,7,7],"day_spread":6,"double_slots":14,"cap":6,"usable":20,"over":[false,false,false,true,true]},"402":{"free":22,"need":20,"morning_free":13,"core_need":10,"core_fits_morning":true,"per_day":[4,5,0,6,7],"day_spread":7,"double_slots":12,"cap":6,"usable":21,"over":[false,false,false,false,true]},"501":{"free":23,"need":22,"morning_free":12,"core_need":10,"core_fits_morning":true,"per_day":[5,4,5,5,4],"day_spread":1,"double_slots":9,"cap":6,"usable":23,"over":[false,false,false,false,false]},"502":{"free":23,"need":22,"morning_free":12,"core_need":10,"core_fits_morning":true,"per_day":[1,3,5,7,7],"day_spread":6,"double_slots":15,"cap":6,"usable":21,"over":[false,false,false,true,true]},"601":{"free":23,"need":22,"morning_free":17,"core_need":10,"core_fits_morning":true,"per_day":[2,5,5,6,5],"day_spread":4,"double_slots":12,"cap":6,"usable":23,"over":[false,false,false,false,false]},"602":{"free":23,"need":22,"morning_free":15,"core_need":10,"core_fits_morning":true,"per_day":[5,6,4,5,3],"day_spread":3,"double_slots":11,"cap":6,"usable":23,"over":[false,false,false,false,false]}}},"solve":{"p1":{"status":"OPTIMAL","time":0.77,"penalty":188,"violations":["101 導師 希望週五不排課（1 年 1 班該日尚未被科任填滿的格數）（成本 150）","1 年 1 班 每天科任課不超過 3 節（成本 30）","體育避開第 [5] 節（成本 8）"]},"p2":{"101":{"status":"OPTIMAL","penalty":0,"time":0.033,"violations":[]},"102":{"status":"OPTIMAL","penalty":0,"time":0.03,"violations":[]},"201":{"status":"OPTIMAL","penalty":0,"time":0.029,"violations":[]},"202":{"status":"OPTIMAL","penalty":0,"time":0.027,"violations":[]},"301":{"status":"OPTIMAL","penalty":0,"time":0.026,"violations":[]},"302":{"status":"OPTIMAL","penalty":0,"time":0.03,"violations":[]},"401":{"status":"OPTIMAL","penalty":0,"time":0.027,"violations":[]},"402":{"status":"OPTIMAL","penalty":0,"time":0.028,"violations":[]},"501":{"status":"OPTIMAL","penalty":0,"time":0.031,"violations":[]},"502":{"status":"OPTIMAL","penalty":0,"time":0.031,"violations":[]},"601":{"status":"OPTIMAL","penalty":0,"time":0.032,"violations":[]},"602":{"status":"OPTIMAL","penalty":0,"time":0.031,"violations":[]}},"badFailed":["502"]},"feasibility":[]}</script>
+<script>
+const D = JSON.parse(document.getElementById('data').textContent);
+const G = D.grid, DAYS = ['一','二','三','四','五'];
+const slotOf = (d,p)=>(d-1)*G.periods+(p-1);
+const dayOf = s=>Math.floor(s/G.periods)+1, perOf = s=>s%G.periods+1;
+const el = (t,c,h)=>{const e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;};
+const roleOf = tid => D.teachers[tid].role;
+const ROLE_TXT = {homeroom:'導師', special:'科任', admin:'行政'};
+
+/* ============ 課表格線 ============ */
+function grid(opts){
+  const {occupied, blocked=[], cellFn, onCell} = opts;
+  const wrap = el('div','tt-scroll'), g = el('div','tt');
+  // 每一格都顯式定位。連堂會佔兩列，若交給 grid 自動排版，後面的格子會被整批
+  // 往後推擠，節次標籤與星期欄就對不上了。
+  const hd0 = el('div','tt-hd',''); hd0.style.gridArea = '1 / 1'; g.appendChild(hd0);
+  DAYS.forEach((d,i)=>{ const e = el('div','tt-hd','週'+d);
+    e.style.gridArea = `1 / ${i+2}`; g.appendChild(e); });
+
+  // 連堂的第二節：不另外佔格，由第一節向下延伸蓋住
+  const spanned = new Set();
+  Object.entries(occupied).forEach(([s,it])=>{
+    if(!it || it.len !== 2) return;
+    spanned.add((it.slot != null ? it.slot : +s) + 1);
+  });
+
+  for(let p=1;p<=G.periods;p++){
+    const lab = el('div','tt-p','第'+p+'節'); lab.style.gridArea = `${p+1} / 1`; g.appendChild(lab);
+    for(let d=1;d<=G.days;d++){
+      const s = slotOf(d,p);
+      if(spanned.has(s)) continue;
+      const c = cellFn(s, occupied[s], blocked.includes(s));
+      c.dataset.slot = s;
+      const rows = (occupied[s] && occupied[s].len === 2) ? 2 : 1;
+      c.style.gridArea = `${p+1} / ${d+1} / span ${rows} / span 1`;
+      if(onCell) { c.tabIndex = 0; c.addEventListener('click',()=>onCell(s,occupied[s]));
+        c.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();onCell(s,occupied[s]);}}); }
+      g.appendChild(c);
+    }
+  }
+  wrap.appendChild(g); return wrap;
+}
+function lessonCell(pl, {locked=false, movable=false, sub2='class'}={}){
+  const role = roleOf(pl.t);
+  const c = el('div','cell r-'+role+(pl.len===2?' dbl':'')+(locked?' locked':'')+(movable?' movable':''));
+  c.appendChild(el('div','t1', D.subjects[pl.s].name));
+  const second = sub2==='class' ? D.classes[pl.c].name : (sub2==='teacher' ? D.teachers[pl.t].name : D.rooms[pl.r].name);
+  c.appendChild(el('div','t2', second));
+  return c;
+}
+function emptyCell(blocked){ return el('div','cell '+(blocked?'blocked':'free')); }
+
+/* ============ 步驟 1 配課 ============ */
+function renderLoad(){
+  const p = document.getElementById('p-load'); p.innerHTML='';
+  p.appendChild(el('p','lede','排課之前先確認<strong>每位老師要上哪些課、鐘點會不會太多</strong>。'
+    +'這一步就能擋掉大部分注定排不出來的配課 —— 而且問題指向的是具體某個人，不是一句「無解」。'));
+
+  const cols = el('div','cols');
+  const side = el('div','card');
+  side.appendChild(el('div','card-h','<h3>可行性檢查</h3>'));
+  const sb = el('div','card-b');
+  sb.appendChild(el('div','note '+(D.feasibility.length?'bad':'ok'),
+    D.feasibility.length ? '✗ '+D.feasibility.join('<br>✗ ')
+    : '<b>全部通過</b><br>班級容量、教師鐘點、教師日上限總量、專科教室容量，皆在可排範圍內。'));
+  const counts = {homeroom:0,special:0,admin:0};
+  D.loads.forEach(l=>counts[l.role]++);
+  const box = el('div'); box.style.marginTop='13px';
+  box.innerHTML = `<div class="eyebrow" style="margin-bottom:7px">教師編制</div>
+    <div class="kv"><span>導師（包班）</span><b>${counts.homeroom}</b></div>
+    <div class="kv"><span>科任（跑班）</span><b>${counts.special}</b></div>
+    <div class="kv"><span>兼行政（減課）</span><b>${counts.admin}</b></div>`;
+  sb.appendChild(box);
+  sb.appendChild(el('div','note info','檢查項目是<b>必要條件</b>：通過不保證排得出來，沒通過則一定排不出來。成本只是純計數，可以邊配課邊即時跑。'));
+  sb.lastChild.style.marginTop='13px';
+  side.appendChild(sb); cols.appendChild(side);
+
+  const main = el('div','card');
+  const h = el('div','card-h','<h3>教師配課與鐘點</h3>');
+  const seg = el('div','seg');
+  ['全部','導師','科任','行政'].forEach((t,i)=>{
+    const b = el('button',null,t); b.setAttribute('aria-pressed', i===0);
+    b.onclick=()=>{ [...seg.children].forEach(x=>x.setAttribute('aria-pressed',false));
+      b.setAttribute('aria-pressed',true); fill(['all','homeroom','special','admin'][i]); };
+    seg.appendChild(b);
+  });
+  h.appendChild(seg); main.appendChild(h);
+  const body = el('div'); body.style.padding='4px 6px'; main.appendChild(body);
+  function fill(filter){
+    body.innerHTML='';
+    const t = el('table');
+    t.innerHTML = '<thead><tr><th>教師</th><th>身分</th><th>任教</th><th>班級數</th>'
+      + '<th style="text-align:right">週節數</th><th style="width:120px">佔週上限</th><th>日上限</th></tr></thead>';
+    const tb = el('tbody');
+    D.loads.filter(l=>filter==='all'||l.role===filter)
+      .sort((a,b)=>b.total-a.total).forEach(l=>{
+      const pct = Math.min(100, l.total/l.max*100);
+      const cls = pct>100?'bad':(pct>90?'warn':'');
+      const tr = el('tr');
+      tr.innerHTML = `<td>${l.name}</td>
+        <td><span class="chip ${l.role}">${ROLE_TXT[l.role]}</span></td>
+        <td style="font-size:12px;color:var(--ink-2)">${l.subjects.map(s=>D.subjects[s].name).join('、')}</td>
+        <td class="num">${l.classes.length}</td>
+        <td class="num">${l.total} / ${l.max}</td>
+        <td><div class="bar"><i class="${cls}" style="width:${pct}%"></i></div></td>
+        <td class="num">${l.cap>=G.periods?'—':l.cap+' 節'}</td>`;
+      tb.appendChild(tr);
+    });
+    t.appendChild(tb); body.appendChild(t);
+  }
+  fill('all'); cols.appendChild(main); p.appendChild(cols);
+}
+</script>
+<script>
+/* ============ 步驟 2 科任／行政排課 ============ */
+let p1Mode = 'teacher', p1Key = null;
+function renderPhase1(){
+  const p = document.getElementById('p-phase1'); p.innerHTML='';
+  p.appendChild(el('p','lede','科任與兼行政教師<strong>跨班跑、共用專科教室、有固定行政時段</strong>，'
+    +'是全校最稀缺的資源。三大衝堂幾乎都發生在這一層，所以他們必須全校一起求解、而且先排。'));
+
+  const p1 = D.placements.filter(x=>x.ph===1);
+  const cols = el('div','cols');
+
+  const side = el('div','card');
+  side.appendChild(el('div','card-h','<h3>求解結果</h3>'));
+  const sb = el('div','card-b');
+  sb.innerHTML = `<div class="kv"><span>狀態</span><b>${D.solve.p1.status}</b></div>
+    <div class="kv"><span>耗時</span><b>${D.solve.p1.time}s</b></div>
+    <div class="kv"><span>已排單元</span><b>${p1.length}</b></div>
+    <div class="kv"><span>懲罰成本</span><b>${D.solve.p1.penalty}</b></div>`;
+  const v = el('div'); v.style.marginTop='14px';
+  v.appendChild(el('div','eyebrow','未完全滿足的軟性需求'));
+  const ul = el('ul','vlist'); ul.style.marginTop='7px';
+  D.solve.p1.violations.forEach(x=>{ const li=el('li'); li.innerHTML='<span style="color:var(--warn)">!</span><span>'+x+'</span>'; ul.appendChild(li); });
+  v.appendChild(ul); sb.appendChild(v);
+  sb.appendChild(el('div','note info','軟性需求打架時，系統給的是<b>違反最少</b>的課表，並明講犧牲了什麼 —— 而不是丟一句「無解」讓教務主任自己猜。'));
+  sb.lastChild.style.marginTop='14px';
+  side.appendChild(sb); cols.appendChild(side);
+
+  const main = el('div','card');
+  const h = el('div','card-h','<h3>排課結果</h3>');
+  const ctl = el('div'); ctl.style.cssText='display:flex;gap:8px;align-items:center;flex-wrap:wrap';
+  const seg = el('div','seg');
+  [['teacher','依教師'],['room','依專科教室']].forEach(([m,t])=>{
+    const b=el('button',null,t); b.setAttribute('aria-pressed', m===p1Mode);
+    b.onclick=()=>{ p1Mode=m; p1Key=null; renderPhase1(); }; seg.appendChild(b);
+  });
+  const sel = el('select');
+  const opts = p1Mode==='teacher'
+    ? D.loads.filter(l=>l.role!=='homeroom').map(l=>[l.id,l.name+'（'+ROLE_TXT[l.role]+'）'])
+    : Object.entries(D.rooms).filter(([,r])=>r.type!=='homeroom').map(([id,r])=>[id,r.name]);
+  if(!p1Key) p1Key = opts[0][0];
+  opts.forEach(([id,name])=>{ const o=el('option',null,name); o.value=id; if(id===p1Key)o.selected=true; sel.appendChild(o); });
+  sel.onchange = ()=>{ p1Key = sel.value; renderPhase1(); };
+  ctl.appendChild(seg); ctl.appendChild(sel); h.appendChild(ctl); main.appendChild(h);
+
+  const b = el('div','card-b');
+  const mine = p1.filter(x => p1Mode==='teacher' ? x.t===p1Key : x.r===p1Key);
+  const occ = {}; mine.forEach(x=>occ[x.slot]=x);
+  const blocked = p1Mode==='teacher' ? teacherHardBlocked(p1Key) : [];
+  b.appendChild(grid({occupied:occ, blocked, cellFn:(s,it,bl)=>
+    it ? lessonCell(it,{sub2:'class'}) : emptyCell(bl)}));
+  const foot = el('div'); foot.style.cssText='margin-top:12px;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap';
+  foot.appendChild(el('div','legend','<span>'+mine.length+' 個時段</span>'
+    + (blocked.length?'<span><span class="sw" style="background:var(--sunken);border-color:var(--line)"></span>不可排課（硬性）</span>':'')));
+  b.appendChild(foot); main.appendChild(b); cols.appendChild(main); p.appendChild(cols);
+}
+function teacherHardBlocked(tid){
+  const out=[];
+  D.constraints.forEach(c=>{
+    if(!c.hard || c.params.teacher!==tid) return;
+    if(c.kind==='TEACHER_UNAVAILABLE'){
+      const ds=c.params.days||[...Array(G.days)].map((_,i)=>i+1);
+      const ps=c.params.periods||[...Array(G.periods)].map((_,i)=>i+1);
+      ds.forEach(d=>ps.forEach(p=>out.push(slotOf(d,p))));
+    }
+    if(c.kind==='TEACHER_DAY_OFF') for(let p=1;p<=G.periods;p++) out.push(slotOf(c.params.day,p));
+  });
+  return out;
+}
+
+/* ============ 步驟 3 交接檢查 ============ */
+let hoMode = 'good';
+function renderHandoff(){
+  const p = document.getElementById('p-handoff'); p.innerHTML='';
+  p.appendChild(el('p','lede','科任排完後，各班剩下的空格就<strong>定型了、無法回頭</strong>。'
+    +'如果第一階段只顧科任老師方便，導師會拿到一堆用不掉的空格 —— 這是分階段排課唯一真正的風險，'
+    +'必須在把課表交給導師之前就檢查出來。'));
+
+  const bar = el('div'); bar.style.cssText='display:flex;gap:9px;align-items:center;margin-bottom:16px;flex-wrap:wrap';
+  const seg = el('div','seg');
+  [['bad','科任排課時不管導師'],['good','科任排課時為導師保留空格']].forEach(([m,t])=>{
+    const b=el('button',null,t); b.setAttribute('aria-pressed', m===hoMode);
+    b.onclick=()=>{ hoMode=m; renderHandoff(); }; seg.appendChild(b);
+  });
+  bar.appendChild(el('span','eyebrow','對照')); bar.appendChild(seg); p.appendChild(bar);
+
+  const H = D.handoff[hoMode], failed = hoMode==='bad' ? D.solve.badFailed : [];
+  const nOver = Object.values(H).filter(h=>h.over.some(Boolean)).length;
+  const nTight = Object.values(H).filter(h=>h.usable===h.need).length;
+
+  p.appendChild(el('div','note '+(failed.length?'bad':'ok'),
+    failed.length
+      ? `<b>${failed.map(c=>D.classes[c].name).join('、')} 的導師排不出課表（INFEASIBLE）。</b><br>`
+        + `空格總數看起來夠，但有幾天留下的空格多於導師的日上限，那些格子永遠用不掉；`
+        + `扣掉之後實際可用節數與需求相等甚至更少，再加上連堂必須佔兩個相鄰格，就沒有解了。`
+      : `<b>十二個班的導師都排得出來。</b><br>每個班每天留給導師的空格都沒有超過導師的日上限，`
+        + `而且想休假的導師，該班那天已由科任課填滿。`));
+
+  const cols2 = el('div'); cols2.style.cssText='display:grid;grid-template-columns:1fr;gap:16px;margin-top:16px';
+  const card = el('div','card');
+  const ch = el('div','card-h','<h3>各班留給導師的空格</h3>');
+  ch.appendChild(el('div','legend',
+    `<span><span class="sw" style="background:var(--surface-2);border-color:var(--line-2)"></span>正常</span>`
+    +`<span><span class="sw" style="background:var(--bad-bg);border-color:var(--bad)"></span>該日空格多於導師日上限（用不掉）</span>`));
+  card.appendChild(ch);
+  const cb = el('div'); cb.style.padding='4px 6px';
+  const t = el('table');
+  t.innerHTML = '<thead><tr><th>班級</th><th>每日剩餘空格</th><th style="text-align:right">空格</th>'
+    + '<th style="text-align:right">導師需求</th><th style="text-align:right">實際可用</th><th>結果</th></tr></thead>';
+  const tb = el('tbody');
+  Object.entries(H).forEach(([cid,h])=>{
+    const tr = el('tr');
+    const boxes = h.per_day.map((n,i)=>`<span class="daybox${h.over[i]?' over':(n===0?' zero':'')}" title="週${DAYS[i]}">${n}</span>`).join('');
+    const dead = failed.includes(cid);
+    const status = dead ? '<span class="chip bad">排不出來</span>'
+      : (h.usable===h.need ? '<span class="chip warn">零餘裕</span>' : '<span class="chip ok">可排</span>');
+    tr.innerHTML = `<td>${D.classes[cid].name}</td>
+      <td><div class="dayrow">${boxes}</div></td>
+      <td class="num">${h.free}</td><td class="num">${h.need}</td>
+      <td class="num"${h.usable<h.need?' style="color:var(--bad);font-weight:600"':''}>${h.usable}</td>
+      <td>${status}</td>`;
+    tb.appendChild(tr);
+  });
+  t.appendChild(tb); cb.appendChild(t); card.appendChild(cb);
+  const cf = el('div','card-b'); cf.style.borderTop='1px solid var(--line)';
+  cf.innerHTML = `<div class="eyebrow" style="margin-bottom:6px">實際可用怎麼算</div>
+    <div style="font-size:12.5px;color:var(--ink-2);max-width:70ch">
+    導師一天最多上 <b>N</b> 節，所以某天就算留了 7 格，也只有 N 格用得到。
+    <span class="mono">實際可用 = Σ min(當日空格, 導師日上限)</span>。
+    這個數字小於導師需求，就是排不出來 —— 而且在科任排完的當下就算得出來，
+    不必等導師試排失敗才發現。</div>`;
+  card.appendChild(cf); cols2.appendChild(card); p.appendChild(cols2);
+
+  const sum = el('div'); sum.style.cssText='display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-top:16px';
+  [['有天數超過導師日上限的班級', nOver, nOver?'bad':'ok'],
+   ['零餘裕（可用＝需求）的班級', nTight, nTight?'warn':'ok'],
+   ['導師排不出課表的班級', failed.length, failed.length?'bad':'ok']].forEach(([lab,n,tone])=>{
+    const c = el('div','card'); const b=el('div','card-b');
+    b.innerHTML = `<div class="eyebrow">${lab}</div>
+      <div class="mono" style="font-size:27px;font-weight:600;margin-top:5px;color:var(--${tone})">${n}<span style="font-size:14px;color:var(--ink-3)"> / 12</span></div>`;
+    c.appendChild(b); sum.appendChild(c);
+  });
+  p.appendChild(sum);
+}
+</script>
+<script>
+/* ============ 步驟 4 導師自排（可拖動，即時檢核） ============ */
+const P2 = {};                       // class_id -> 導師課的目前位置（可編輯）
+D.placements.filter(x=>x.ph===2).forEach(x=>{ (P2[x.c] = P2[x.c] || []).push({...x}); });
+const P2_ORIG = JSON.parse(JSON.stringify(P2));
+let p2Class = Object.keys(D.classes)[0], p2Sel = null;
+
+const canStartDouble = s => perOf(s) < G.periods && !G.breaks.includes(perOf(s));
+function classOccupancy(cid, exceptIdx){
+  const occ = {};
+  D.placements.filter(x=>x.ph===1 && x.c===cid).forEach(x=>{
+    for(let i=0;i<x.len;i++) occ[x.slot+i] = {...x, locked:true};
+  });
+  P2[cid].forEach((x,i)=>{ if(i===exceptIdx) return;
+    for(let k=0;k<x.len;k++) occ[x.slot+k] = {...x, idx:i}; });
+  return occ;
+}
+/* 一次移動合不合法，以及為什麼不合法 —— 前端就能判斷，不必呼叫後端 */
+function checkMove(cid, idx, target){
+  const lesson = P2[cid][idx], cls = D.classes[cid];
+  const cap = D.teachers[lesson.t].cap;
+  const need = [...Array(lesson.len)].map((_,i)=>target+i);
+  if(lesson.len===2 && !canStartDouble(target)) return {ok:false, why:'連堂不能跨午休或跨日'};
+  if(need.some(s=>dayOf(s)!==dayOf(target))) return {ok:false, why:'連堂不能跨日'};
+  if(need.some(s=>cls.blocked.includes(s))) return {ok:false, why:'該班這節不上課'};
+  const occ = classOccupancy(cid, idx);
+  for(const s of need){
+    const o = occ[s];
+    if(o) return {ok:false, why: o.locked ? '已排定科任課：'+D.subjects[o.s].name : '已有導師課：'+D.subjects[o.s].name};
+  }
+  const d = dayOf(target);
+  let dayCount = lesson.len;
+  P2[cid].forEach((x,i)=>{ if(i===idx) return;
+    for(let k=0;k<x.len;k++) if(dayOf(x.slot+k)===d) dayCount++; });
+  if(dayCount > cap) return {ok:false, why:`超過導師日上限（該日將達 ${dayCount} 節，上限 ${cap} 節）`};
+  return {ok:true};
+}
+function renderPhase2(){
+  const p = document.getElementById('p-phase2'); p.innerHTML='';
+  p.appendChild(el('p','lede','導師<strong>只教自己班、只用原班教室</strong>，所以扣掉科任課之後，班與班之間完全獨立 —— '
+    +'導師怎麼排都不會影響別班。這就是「剩下來的給導師自己排」成立的原因，系統只需要即時檢核。'
+    +'<br>點一堂<span style="color:var(--homeroom)">導師的課</span>，可以放的位置會亮起來。'));
+
+  const cols = el('div','cols');
+  const side = el('div','card');
+  side.appendChild(el('div','card-h','<h3>即時檢核</h3>'));
+  const sb = el('div','card-b'); sb.id='p2-check';
+  side.appendChild(sb); cols.appendChild(side);
+
+  const main = el('div','card');
+  const h = el('div','card-h','<h3>導師課表</h3>');
+  const ctl = el('div'); ctl.style.cssText='display:flex;gap:8px;align-items:center;flex-wrap:wrap';
+  const sel = el('select');
+  Object.entries(D.classes).forEach(([id,c])=>{ const o=el('option',null,c.name); o.value=id;
+    if(id===p2Class)o.selected=true; sel.appendChild(o); });
+  sel.onchange=()=>{ p2Class=sel.value; p2Sel=null; renderPhase2(); };
+  const reset = el('button','btn','復原');
+  reset.onclick=()=>{ P2[p2Class]=JSON.parse(JSON.stringify(P2_ORIG[p2Class])); p2Sel=null; renderPhase2(); };
+  ctl.appendChild(sel); ctl.appendChild(reset); h.appendChild(ctl); main.appendChild(h);
+
+  const b = el('div','card-b');
+  const cls = D.classes[p2Class];
+  const occ = classOccupancy(p2Class);
+  const moves = p2Sel==null ? null : {};
+  if(p2Sel!=null) for(let s=0;s<G.days*G.periods;s++) moves[s] = checkMove(p2Class, p2Sel, s);
+
+  b.appendChild(grid({
+    occupied: occ, blocked: cls.blocked,
+    cellFn:(s,it,bl)=>{
+      if(it){
+        const c = lessonCell(it, {locked:!!it.locked, movable:it.idx!=null, sub2:'teacher'});
+        if(it.idx!=null && it.idx===p2Sel) c.classList.add('sel');
+        return c;
+      }
+      const c = emptyCell(bl);
+      if(moves && !bl){
+        const m = moves[s];
+        c.classList.add(m.ok ? 'tgt-ok' : 'tgt-no');
+        if(!m.ok) c.title = m.why;
+        else c.appendChild(el('div','t2','放這裡'));
+      }
+      return c;
+    },
+    onCell:(s,it)=>{
+      if(it && it.idx!=null){ p2Sel = (p2Sel===it.idx ? null : it.idx); renderPhase2(); return; }
+      if(p2Sel!=null && !it){
+        const m = checkMove(p2Class, p2Sel, s);
+        if(m.ok){ P2[p2Class][p2Sel].slot = s; p2Sel=null; renderPhase2(); }
+        else { flash(m.why); }
+      }
+    }
+  }));
+  const lg = el('div','legend'); lg.style.marginTop='12px';
+  lg.innerHTML = `<span><span class="sw" style="background:var(--homeroom-bg);border-color:var(--homeroom-line)"></span>導師（可移動）</span>
+    <span><span class="sw" style="background:var(--special-bg);border-color:var(--special-line)"></span>科任（已排定）</span>
+    <span><span class="sw" style="background:var(--admin-bg);border-color:var(--admin-line)"></span>行政（已排定）</span>
+    <span><span class="sw" style="background:var(--sunken);border-color:var(--line)"></span>空堂</span>`;
+  b.appendChild(lg);
+  const msg = el('div'); msg.id='p2-msg'; msg.style.marginTop='10px'; b.appendChild(msg);
+  main.appendChild(b); cols.appendChild(main); p.appendChild(cols);
+  renderP2Check();
+}
+function flash(why){
+  const m = document.getElementById('p2-msg'); if(!m) return;
+  m.innerHTML=''; m.appendChild(el('div','note bad','不能放這裡：'+why));
+  setTimeout(()=>{ if(m) m.innerHTML=''; }, 3200);
+}
+function renderP2Check(){
+  const sb = document.getElementById('p2-check'); if(!sb) return;
+  const cid = p2Class, cls = D.classes[cid], list = P2[cid];
+  const tid = list[0].t, cap = D.teachers[tid].cap;
+  const perDay = [...Array(G.days)].map((_,i)=>0);
+  const bySubDay = {};
+  list.forEach(x=>{ for(let k=0;k<x.len;k++){ const s=x.slot+k, d=dayOf(s);
+    perDay[d-1]++; const key=x.s+'|'+d; bySubDay[key]=(bySubDay[key]||0)+1; } });
+  const total = perDay.reduce((a,b)=>a+b,0);
+  const pmCore = list.filter(x=>D.subjects[x.s].core)
+    .reduce((n,x)=>n + [...Array(x.len)].filter((_,k)=>!G.morning.includes(perOf(x.slot+k))).length, 0);
+  const coreTotal = list.filter(x=>D.subjects[x.s].core).reduce((n,x)=>n+x.len,0);
+
+  sb.innerHTML = `<div class="eyebrow">${D.teachers[tid].name}</div>
+    <div class="kv"><span>本週節數</span><b>${total}</b></div>
+    <div class="kv"><span>日上限</span><b>${cap} 節</b></div>`;
+  const dr = el('div'); dr.style.marginTop='12px';
+  dr.appendChild(el('div','eyebrow','每日節數'));
+  const row = el('div','dayrow'); row.style.marginTop='6px';
+  perDay.forEach((n,i)=>{ const d=el('span','daybox'+(n>cap?' over':(n===0?' zero':'')), String(n));
+    d.title='週'+DAYS[i]; row.appendChild(d); });
+  dr.appendChild(row); sb.appendChild(dr);
+
+  const issues = [];
+  perDay.forEach((n,i)=>{ if(n>cap) issues.push(['bad',`週${DAYS[i]} ${n} 節，超過日上限 ${cap} 節`]); });
+  Object.entries(bySubDay).forEach(([k,n])=>{
+    const [sid,d] = k.split('|');
+    const lim = sid==='MA' ? 1 : (sid==='CH' ? 2 : 99);
+    if(n>lim) issues.push(['warn',`週${DAYS[d-1]}的${D.subjects[sid].name} ${n} 節，建議一天不超過 ${lim} 節`]);
+  });
+  if(pmCore) issues.push(['warn',`有 ${pmCore} 節主科排在下午（共 ${coreTotal} 節主科）`]);
+  D.constraints.filter(c=>c.kind==='TEACHER_DAY_OFF' && c.params.teacher===tid).forEach(c=>{
+    const n = perDay[c.params.day-1];
+    issues.push(n===0 ? ['ok',`週${DAYS[c.params.day-1]}不排課的需求已滿足`]
+                      : ['warn',`希望週${DAYS[c.params.day-1]}不排課，目前仍有 ${n} 節`]);
+  });
+  const box = el('div'); box.style.marginTop='14px';
+  box.appendChild(el('div','eyebrow','檢核'));
+  if(!issues.length){ const n=el('div','note ok','沒有任何衝突或建議事項。'); n.style.marginTop='7px'; box.appendChild(n); }
+  else issues.slice(0,6).forEach(([tone,txt])=>{ const n=el('div','note '+tone,txt);
+    n.style.marginTop='7px'; box.appendChild(n); });
+  sb.appendChild(box);
+  const hint = el('div','note info','硬性衝突（班級／教師／教室撞堂）在這個畫面<b>不可能發生</b> —— 導師只能動自己班的空格。所以這裡列的都是品質建議。');
+  hint.style.marginTop='14px'; sb.appendChild(hint);
+}
+
+/* ============ 步驟 5 三視角檢視 ============ */
+let vMode='class', vKey=null;
+function allPlacements(){
+  return D.placements.filter(x=>x.ph===1).concat(...Object.values(P2));
+}
+function renderView(){
+  const p = document.getElementById('p-view'); p.innerHTML='';
+  p.appendChild(el('p','lede','班級、教師、教室三種課表是<strong>同一份資料的三種投影</strong>，'
+    +'不要為每個視角各存一份。教務組長改課表看班級視角，老師看自己的，場地組看專科教室的使用率。'
+    +'上一步的調整會直接反映在這裡。'));
+
+  const bar = el('div'); bar.style.cssText='display:flex;gap:9px;align-items:center;margin-bottom:16px;flex-wrap:wrap';
+  const seg = el('div','seg');
+  [['class','班級'],['teacher','教師'],['room','教室']].forEach(([m,t])=>{
+    const b=el('button',null,t); b.setAttribute('aria-pressed', m===vMode);
+    b.onclick=()=>{ vMode=m; vKey=null; renderView(); }; seg.appendChild(b);
+  });
+  const sel = el('select');
+  const opts = vMode==='class' ? Object.entries(D.classes).map(([i,c])=>[i,c.name])
+    : vMode==='teacher' ? D.loads.map(l=>[l.id, l.name])
+    : Object.entries(D.rooms).map(([i,r])=>[i,r.name]);
+  if(!vKey) vKey = opts[0][0];
+  opts.forEach(([id,n])=>{ const o=el('option',null,n); o.value=id; if(id===vKey)o.selected=true; sel.appendChild(o); });
+  sel.onchange=()=>{ vKey=sel.value; renderView(); };
+  bar.appendChild(seg); bar.appendChild(sel); p.appendChild(bar);
+
+  const all = allPlacements();
+  const mine = all.filter(x => vMode==='class' ? x.c===vKey : vMode==='teacher' ? x.t===vKey : x.r===vKey);
+  const occ = {}; mine.forEach(x=>{ occ[x.slot]=x; });
+  const blocked = vMode==='class' ? D.classes[vKey].blocked
+                : vMode==='teacher' ? teacherHardBlocked(vKey) : [];
+
+  const card = el('div','card');
+  const title = vMode==='class' ? D.classes[vKey].name : vMode==='teacher' ? D.teachers[vKey].name : D.rooms[vKey].name;
+  const slots = mine.reduce((n,x)=>n+x.len,0);
+  const h = el('div','card-h', `<h3>${title}</h3>`);
+  h.appendChild(el('div','legend', `<span class="mono">${slots} 節</span>`
+    + (vMode==='room' ? `<span class="mono">使用率 ${Math.round(slots/(G.days*G.periods)*100)}%</span>` : '')));
+  card.appendChild(h);
+  const b = el('div','card-b');
+  b.appendChild(grid({occupied:occ, blocked, cellFn:(s,it,bl)=> it
+    ? lessonCell(it,{sub2: vMode==='class' ? 'teacher' : 'class'})
+    : emptyCell(bl)}));
+  card.appendChild(b); p.appendChild(card);
+
+  const ver = el('div'); ver.style.cssText='display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-top:16px';
+  const clash = countClashes(all);
+  [['班級衝堂',clash.c],['教師衝堂',clash.t],['教室衝堂',clash.r],['節數不符',countShort(all)]].forEach(([lab,n])=>{
+    const c=el('div','card'), bb=el('div','card-b');
+    bb.innerHTML = `<div class="eyebrow">${lab}</div>
+      <div class="mono" style="font-size:27px;font-weight:600;margin-top:5px;color:var(--${n?'bad':'ok'})">${n}<span style="font-size:13px;color:var(--ink-3)"> 件</span></div>`;
+    c.appendChild(bb); ver.appendChild(c);
+  });
+  p.appendChild(ver);
+  const nb = el('div','note info'); nb.style.marginTop='14px';
+  nb.innerHTML = '這四個數字是<b>硬約束驗證</b>，在每次調整後即時重算。它們必須永遠是 0 —— 只要有一件不是 0，這份課表就不能發布。';
+  p.appendChild(nb);
+}
+function countClashes(all){
+  const seen={c:new Set(),t:new Set(),r:new Set()}, out={c:0,t:0,r:0};
+  all.forEach(x=>{ for(let i=0;i<x.len;i++){ const s=x.slot+i;
+    [['c',x.c],['t',x.t],['r',x.r]].forEach(([k,id])=>{ const key=id+'@'+s;
+      if(seen[k].has(key)) out[k]++; seen[k].add(key); }); } });
+  return out;
+}
+function countShort(all){
+  const got={};
+  all.forEach(x=>{ const k=x.c+'|'+x.s; got[k]=(got[k]||0)+x.len; });
+  return D.requirements.filter(r=>(got[r.c+'|'+r.s]||0)!==r.n).length;
+}
+
+/* ============ 導覽 ============ */
+const STEPS = [
+  ['p-load','配課與鐘點', renderLoad],
+  ['p-phase1','科任／行政排課', renderPhase1],
+  ['p-handoff','交接檢查', renderHandoff],
+  ['p-phase2','導師自排', renderPhase2],
+  ['p-view','課表檢視', renderView],
+];
+const nav = document.getElementById('steps');
+STEPS.forEach(([id,label],i)=>{
+  const b = el('button','step');
+  b.innerHTML = `<span class="n">${i+1}</span><span>${label}</span>`;
+  b.setAttribute('role','tab'); b.setAttribute('aria-selected', i===0);
+  b.setAttribute('aria-controls', id);
+  b.onclick = ()=>go(i);
+  nav.appendChild(b);
+});
+function go(i){
+  STEPS.forEach(([id],k)=>{
+    document.getElementById(id).hidden = k!==i;
+    nav.children[k].setAttribute('aria-selected', k===i);
+  });
+  STEPS[i][2]();
+  window.scrollTo({top:0, behavior:'instant'});
+}
+document.getElementById('stats').innerHTML = [
+  [Object.keys(D.classes).length,'班級'], [D.loads.length,'教師'],
+  [Object.keys(D.rooms).length,'教室'], [D.placements.length,'排定單元'],
+  [countClashes(allPlacements()).c + countClashes(allPlacements()).t + countClashes(allPlacements()).r, '硬衝突'],
+].map(([n,l])=>`<div class="stat"><b>${n}</b><span>${l}</span></div>`).join('');
+go(0);
+</script>

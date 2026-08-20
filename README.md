@@ -61,3 +61,18 @@ python3 compare_handoff.py                   # 交接品質對照實驗
 | `prototype/gen_sample.py` | 產生範例學校資料 |
 | `prototype/run.py` | CLI 進入點 |
 | `prototype/data/sample_school.json` | 範例資料（全部設定皆為資料驅動） |
+
+## 畫面原型
+
+`ui/index.html` 是可互動的畫面原型，五個步驟對應實際作業流程，
+資料全部來自 `prototype/` 的實際求解結果（由 `prototype/export_ui.py` 匯出）：
+
+1. **配課與鐘點** — 教師配課表、鐘點佔比、可行性檢查
+2. **科任／行政排課** — Phase 1 結果，可依教師或專科教室檢視
+3. **交接檢查** — 各班留給導師的空格，含「有／沒有為導師著想」的對照
+4. **導師自排** — 點一堂導師的課，可放的位置會亮起來，即時檢核
+5. **課表檢視** — 班級／教師／教室三視角，硬約束即時驗證
+
+```bash
+cd prototype && python3 export_ui.py    # 重新匯出畫面用資料
+```
