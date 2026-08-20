@@ -92,7 +92,7 @@ python3 compare_handoff.py                   # 交接品質對照實驗
 網站是靜態的，跑不了求解器，但可以編輯資料再帶回本機求解：
 
 ```
-網站「老師設定」改完 → 匯出 JSON
+網站「老師設定」改完 → 下載 JSON（或用「複製 JSON」貼成檔案）
       ↓
 python3 prototype/apply_teachers.py ~/Downloads/teachers.json
 python3 prototype/run.py --phased
@@ -101,7 +101,7 @@ python3 prototype/export_ui.py && python3 ui/build_site.py   # 把新結果放�
 ```
 
 老師設定的修改存在瀏覽器的 localStorage，換裝置不會跟著走，
-要保留請用「匯出 JSON」。
+要保留請用「下載 JSON」。嵌入式檢視器可能擋下載，那裡請改用「複製 JSON」。
 
 ```bash
 cd prototype && python3 export_ui.py    # 重新求解並匯出畫面用資料

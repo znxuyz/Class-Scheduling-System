@@ -824,8 +824,23 @@ function renderTeachers(){
   side.appendChild(list);
   const sf = el('div','card-b'); sf.style.borderTop='1px solid var(--line)';
   const bar = el('div'); bar.style.cssText='display:flex;gap:7px;flex-wrap:wrap';
-  const exp = el('button','btn','匯出 JSON');
+  const exp = el('button','btn','下載 JSON');
   exp.onclick=exportTeachers;
+  // 下載在某些嵌入式檢視器裡會被沙箱擋掉，所以一定要有複製這條路
+  const cpy = el('button','btn','複製 JSON');
+  cpy.onclick=async()=>{
+    const txt = teachersJSON();
+    try{
+      await navigator.clipboard.writeText(txt);
+      cpy.textContent='已複製 ✓';
+      setTimeout(()=>{ cpy.textContent='複製 JSON'; }, 1800);
+    }catch(e){
+      const ta = el('textarea'); ta.className='in'; ta.rows=10; ta.value=txt;
+      ta.readOnly=true; ta.style.marginTop='10px';
+      const old = sf.querySelector('textarea'); if(old) old.remove();
+      sf.appendChild(ta); ta.select();
+    }
+  };
   const imp = el('button','btn','匯入 JSON');
   const file = el('input'); file.type='file'; file.accept='.json'; file.style.display='none';
   file.onchange=e=>{ const f=e.target.files[0]; if(!f) return;
@@ -838,7 +853,8 @@ function renderTeachers(){
   imp.onclick=()=>file.click();
   const rst = el('button','btn','回復預設');
   rst.onclick=()=>{ if(confirm('會清掉這台裝置上的所有修改，確定？')) resetTS(); };
-  bar.appendChild(exp); bar.appendChild(imp); bar.appendChild(rst); bar.appendChild(file);
+  bar.appendChild(exp); bar.appendChild(cpy); bar.appendChild(imp);
+  bar.appendChild(rst); bar.appendChild(file);
   sf.appendChild(bar);
   sf.appendChild(el('div','note info','修改只存在這台瀏覽器。要重新排課，請匯出 JSON 後餵給 <span class="mono">prototype/</span> 的求解器。'));
   sf.lastChild.style.marginTop='11px';
@@ -1016,7 +1032,7 @@ function describeConstraint(c){
   }
 }
 
-function exportTeachers(){
+function teachersJSON(){
   const out = {
     teachers: TS.teachers.map(t=>({
       id:t.id, name:t.name, role:t.role,
@@ -1028,7 +1044,11 @@ function exportTeachers(){
       weight: c.weight || 1,
     })),
   };
-  const blob = new Blob([JSON.stringify(out,null,2)], {type:'application/json'});
+  return JSON.stringify(out, null, 2);
+}
+
+function exportTeachers(){
+  const blob = new Blob([teachersJSON()], {type:'application/json'});
   const a = el('a'); a.href=URL.createObjectURL(blob);
   a.download='teachers.json'; document.body.appendChild(a); a.click();
   setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 0);
