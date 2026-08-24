@@ -120,6 +120,8 @@ class Constraint:
 
     kind:
       TEACHER_UNAVAILABLE   老師某些時段不能排課       params: {teacher, slots|days|periods}
+      TEACHER_ONLY_IN       老師只能排在這些時段       params: {teacher, days|periods}
+                            （上一項的反面：兼課老師只有週二、週四能來）
       TEACHER_DAY_OFF       老師希望某天完全沒課       params: {teacher, day}
       TEACHER_MAX_PER_DAY   老師一天最多幾節           params: {teacher, max}
       TEACHER_MAX_RUN       老師最多連續幾節           params: {teacher, max}
@@ -239,6 +241,10 @@ class School:
                 continue
             if c.kind == "TEACHER_UNAVAILABLE":
                 blocked |= self._resolve_slots(c.params)
+            elif c.kind == "TEACHER_ONLY_IN":
+                # 「只排這些時段」＝「其餘全部不可排」，取補集就跟其他限制同構
+                allowed = self._resolve_slots(c.params)
+                blocked |= {s for s in self.grid.all_slots() if s not in allowed}
             elif c.kind == "TEACHER_DAY_OFF":
                 blocked |= set(self.grid.slots_of_day(c.params["day"]))
         return blocked

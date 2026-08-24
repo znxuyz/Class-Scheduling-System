@@ -50,6 +50,7 @@ class Solution:
 DEFAULT_WEIGHTS = {
     "TEACHER_DAY_OFF": 100,
     "TEACHER_UNAVAILABLE": 100,
+    "TEACHER_ONLY_IN": 100,
     "TEACHER_MAX_PER_DAY": 40,
     "TEACHER_MAX_RUN": 20,
     "SUBJECT_SPREAD": 10,
@@ -289,6 +290,17 @@ class Scheduler:
                     cnt = self.m.NewIntVar(0, len(slots), f"viol_{tid}_{c.kind}")
                     self.m.Add(cnt == sum(terms))
                     self._add_penalty(cnt, w, desc)
+
+            elif c.kind == "TEACHER_ONLY_IN":
+                tid = c.params["teacher"]
+                name = self.school.teachers[tid].name
+                allowed = self.school._resolve_slots(c.params)
+                outside = [s for s in g.all_slots() if s not in allowed]
+                terms = [v_ for s in outside for v_ in self._teacher_busy(tid, s)]
+                if terms:
+                    cnt = self.m.NewIntVar(0, len(terms), f"only_{tid}")
+                    self.m.Add(cnt == sum(terms))
+                    self._add_penalty(cnt, w, f"{name} 只在指定時段排課")
 
             elif c.kind == "TEACHER_MAX_PER_DAY":
                 tid = c.params["teacher"]

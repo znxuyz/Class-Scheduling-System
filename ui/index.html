@@ -453,6 +453,12 @@ function teacherHardBlocked(tid){
       ds.forEach(d=>ps.forEach(p=>out.push(slotOf(d,p))));
     }
     if(c.kind==='TEACHER_DAY_OFF') for(let p=1;p<=G.periods;p++) out.push(slotOf(c.params.day,p));
+    if(c.kind==='TEACHER_ONLY_IN'){
+      const ds=c.params.days||[...Array(G.days)].map((_,i)=>i+1);
+      const ps=c.params.periods||[...Array(G.periods)].map((_,i)=>i+1);
+      const ok=new Set(); ds.forEach(d=>ps.forEach(p=>ok.add(slotOf(d,p))));
+      for(let s=0;s<G.days*G.periods;s++) if(!ok.has(s)) out.push(s);
+    }
   });
   return out;
 }
@@ -771,6 +777,7 @@ function countShort(all){
 const CK = {
   TEACHER_DAY_OFF:      {label:'某天完全不排課',   fields:['day'],           w:100},
   TEACHER_UNAVAILABLE:  {label:'特定時段不能排課', fields:['days','periods'],w:100},
+  TEACHER_ONLY_IN:      {label:'只排在特定時段',   fields:['days','periods'],w:100},
   TEACHER_MAX_PER_DAY:  {label:'一天最多幾節',     fields:['max'],           w:40},
   TEACHER_MAX_RUN:      {label:'最多連續幾節',     fields:['max'],           w:20},
   TEACHER_COMPACT:      {label:'課表不要有空堂',   fields:[],                w:5},
@@ -1015,6 +1022,7 @@ function renderTeachers(){
       for(let i=1;i<=G.periods;i++){ const b=el('button','chip-tog',String(i)); b.type='button';
         b.dataset.period=i; b.onclick=()=>b.classList.toggle('on'); g2.appendChild(b); }
       params.appendChild(g2);
+      params.appendChild(el('span','pick-l','（不選＝全部）'));
     }
     if(f.includes('max')){
       const n=el('input'); n.type='number'; n.min='1'; n.max=String(G.periods);
@@ -1029,13 +1037,12 @@ function renderTeachers(){
   addC.onclick=()=>{
     const kind=kSel.value, f=CK[kind].fields, ps={teacher:t.id};
     if(f.includes('day')) ps.day = +params.querySelector('#p-day').value;
-    if(f.includes('days')){
+    if(f.includes('days') && f.includes('periods')){
       const d=[...params.querySelectorAll('[data-day].on')].map(b=>+b.dataset.day);
-      if(!d.length){ alert('請至少選一個星期'); return; } ps.days=d;
-    }
-    if(f.includes('periods')){
       const q=[...params.querySelectorAll('[data-period].on')].map(b=>+b.dataset.period);
-      if(!q.length){ alert('請至少選一個節次'); return; } ps.periods=q;
+      if(!d.length && !q.length){ alert('星期與節次至少要選一邊'); return; }
+      if(d.length) ps.days=d;          // 沒選＝全部，直接不寫這個欄位
+      if(q.length) ps.periods=q;
     }
     if(f.includes('max')) ps.max = +params.querySelector('#p-max').value||1;
     TS.constraints.push({kind, params:ps, hard:false, weight:CK[kind].w});
@@ -1048,12 +1055,18 @@ function renderTeachers(){
   main.appendChild(mb); cols.appendChild(main); p.appendChild(cols);
 }
 
+// days／periods 任一邊沒選就代表「全部」，描述文字要跟著變，不能寫死成兩段
+function spanText(p){
+  const d = p.days && p.days.length ? '週'+p.days.map(x=>DAYS[x-1]).join('、') : '每天';
+  const q = p.periods && p.periods.length ? '第 '+p.periods.join('、')+' 節' : '整天';
+  return d + (q==='整天' ? '' : '的' + q);
+}
 function describeConstraint(c){
   const p = c.params;
   switch(c.kind){
     case 'TEACHER_DAY_OFF':     return `週${DAYS[p.day-1]}完全不排課`;
-    case 'TEACHER_UNAVAILABLE': return `週${(p.days||[]).map(d=>DAYS[d-1]).join('、')} 的 `
-                                     + `第 ${(p.periods||[]).join('、')} 節不排課`;
+    case 'TEACHER_UNAVAILABLE': return spanText(p) + '不排課';
+    case 'TEACHER_ONLY_IN':     return '只排在' + spanText(p);
     case 'TEACHER_MAX_PER_DAY': return `一天最多 ${p.max} 節`;
     case 'TEACHER_MAX_RUN':     return `最多連續 ${p.max} 節`;
     case 'TEACHER_COMPACT':     return '課表不要有零星空堂';
@@ -1118,7 +1131,7 @@ function TROWS(){
    絕不會吐出一份有老師同時教兩班的課表。                                    */
 
 const SW = {
-  TEACHER_DAY_OFF:100, TEACHER_UNAVAILABLE:100, TEACHER_MAX_PER_DAY:40,
+  TEACHER_DAY_OFF:100, TEACHER_UNAVAILABLE:100, TEACHER_ONLY_IN:100, TEACHER_MAX_PER_DAY:40,
   TEACHER_MAX_RUN:20, SUBJECT_SPREAD:10, TEACHER_COMPACT:5, SUBJECT_NOT_IN:8,
   CORE_IN_MORNING:2, HOMEROOM_DAY_CAPACITY:500, HOMEROOM_DAY_OFF:150,
   RESERVE_MORNING:30, SPECIAL_BALANCE:15,
@@ -1145,6 +1158,11 @@ function mkCtx(D){
     if(!c.hard) return;
     const p=c.params||{};
     if(c.kind==='TEACHER_UNAVAILABLE' && p.teacher) expand(p).forEach(s=>tBlocked[p.teacher].add(s));
+    if(c.kind==='TEACHER_ONLY_IN' && p.teacher){
+      // 「只排這些時段」＝「其餘全部不可排」
+      const ok=expand(p);
+      for(let s=0;s<g.days*g.periods;s++) if(!ok.has(s)) tBlocked[p.teacher].add(s);
+    }
     if(c.kind==='TEACHER_DAY_OFF' && p.teacher)
       for(let q=1;q<=g.periods;q++) tBlocked[p.teacher].add((p.day-1)*g.periods+(q-1));
     if(c.kind==='SUBJECT_NOT_IN' && p.subject)
@@ -1276,6 +1294,12 @@ function penalty(ctx, st, units, opts){
       case 'TEACHER_UNAVAILABLE': {
         if(!t) break; let n=0; ctx.expand(p).forEach(s=>n+=busy(t,s));
         add(n, w, `${nm} 希望避開指定時段`); break;
+      }
+      case 'TEACHER_ONLY_IN': {
+        if(!t) break;
+        const ok=ctx.expand(p); let n=0;
+        for(let s=0;s<ctx.NS;s++) if(!ok.has(s)) n+=busy(t,s);
+        add(n, w, `${nm} 只在指定時段排課`); break;
       }
       case 'TEACHER_MAX_PER_DAY':
         if(!t) break;
@@ -1560,6 +1584,49 @@ function handoffReport(D, phase1){
    所以求解過程中畫面不會凍住，隨時可以停 —— 停下來拿到的也是一份合法課表，
    因為硬約束全程都是不變量。                                              */
 
+
+/* 排課前的可行性檢查。求解器失敗只會說「排不出來」，對使用者沒有幫助；
+   絕大多數的無解在配課階段就注定了，而且用簡單的計數就能指出是誰的問題。 */
+function feasibilityIssues(){
+  const ctx = mkCtx(D), g = D.grid, out = [];
+  const assigned = tid => D.requirements.filter(r=>r.t===tid).reduce((n,r)=>n+r.n,0);
+
+  Object.entries(D.classes).forEach(([cid,cls])=>{
+    const total = D.requirements.filter(r=>r.c===cid).reduce((n,r)=>n+r.n,0);
+    const cap = ctx.NS - cls.blocked.length;
+    if(total>cap) out.push(`${cls.name} 配課 ${total} 節，但一週只有 ${cap} 個可上課時段`);
+  });
+
+  Object.entries(D.teachers).forEach(([tid,t])=>{
+    const total = assigned(tid); if(!total) return;
+    if(total > t.max) out.push(`${t.name} 配課 ${total} 節，超過週上限 ${t.max} 節`);
+    const blocked = ctx.tBlocked[tid] || new Set();
+    const free = ctx.NS - blocked.size;
+    if(total > free)
+      out.push(`${t.name} 配課 ${total} 節，但扣掉不可排課的時段後只剩 ${free} 個時段`);
+    // 一天上限 × 還能上課的天數
+    let usable = 0;
+    for(let d=1;d<=g.days;d++){
+      let n=0; for(let q=1;q<=g.periods;q++) if(!blocked.has((d-1)*g.periods+(q-1))) n++;
+      usable += Math.min(n, t.cap);
+    }
+    if(total > usable)
+      out.push(`${t.name} 配課 ${total} 節，但每天最多 ${t.cap} 節，`
+             + `扣掉不可排課的時段後實際只排得下 ${usable} 節`);
+  });
+
+  const demand = {};
+  D.requirements.forEach(r=>{ const rt=D.subjects[r.s].room;
+    if(rt) demand[rt]=(demand[rt]||0)+r.n; });
+  Object.entries(demand).forEach(([rt,need])=>{
+    const n = Object.values(D.rooms).filter(r=>r.type===rt).length;
+    if(!n){ out.push(`有科目需要 ${rt} 教室，但學校沒有這種教室`); return; }
+    if(need > n*ctx.NS)
+      out.push(`${rt} 教室需求 ${need} 節，但 ${n} 間 × ${ctx.NS} 節 = ${n*ctx.NS} 節，容量不足`);
+  });
+  return out;
+}
+
 let solving = false, cancelSolve = false, hideTimer = null;
 
 function solveBarHTML(){
@@ -1586,6 +1653,12 @@ async function runSolve(seconds){
   const cost = document.getElementById('sb-cost');
   bar.hidden = false; btn.disabled = true; btn.textContent = '排課中…';
 
+  const issues = feasibilityIssues();
+  if(issues.length){
+    bar.hidden = true; btn.disabled = false; btn.textContent = '重新排課'; solving = false;
+    showSolveError('這些問題會讓課表排不出來，請先修正：', issues);
+    return;
+  }
   const ms1 = Math.round(seconds*1000*0.75), ms2 = Math.round(seconds*1000*0.25/12);
   const total = ms1 + ms2*12; const t0 = Date.now();
 
@@ -1600,9 +1673,9 @@ async function runSolve(seconds){
       },
       cancelled: ()=>cancelSolve,
     });
-    if(!res.ok && !res.placements){
+    if(!res.placements){
       bar.hidden=true;
-      alert('排不出來：'+(res.reason||'請檢查配課與教室設定'));
+      showSolveError('排不出來。', [res.reason||'請檢查配課、教師時段限制與專科教室數量。']);
       return;
     }
     applySolution(res);
@@ -1618,7 +1691,24 @@ async function runSolve(seconds){
 }
 
 /* 把新解寫回共用資料，讓每個畫面都跟著更新 */
+// 錯誤直接顯示在頁面上，不用 alert —— 清單可能有很多條，而且要看得到細節
+function showSolveError(title, lines){
+  const host = document.getElementById('solve-host');
+  const old = host.querySelector('.solve-err'); if(old) old.remove();
+  const box = el('div','note bad solve-err');
+  box.style.margin = '12px 0';
+  box.innerHTML = `<b>${title}</b><ul style="margin:7px 0 0;padding-left:18px">`
+    + lines.map(x=>`<li>${x}</li>`).join('') + '</ul>';
+  const close = el('button','btn x','✕'); close.type='button';
+  close.style.cssText='float:right;margin:-2px 0 0 10px';
+  close.onclick=()=>box.remove();
+  box.prepend(close);
+  host.appendChild(box);
+}
+
 function applySolution(res){
+  const old = document.getElementById('solve-host').querySelector('.solve-err');
+  if(old) old.remove();
   D.placements = res.placements.map(p=>({
     c:p.c, s:p.s, t:p.t, r:p.r, slot:p.slot, len:p.len,
     ph: D.teachers[p.t].role==='homeroom' ? 2 : 1,
