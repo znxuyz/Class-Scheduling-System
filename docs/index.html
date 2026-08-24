@@ -260,6 +260,44 @@ button.btn.on{background:var(--accent); border-color:var(--accent); color:#fff}
 .sb-track i{display:block; height:100%; width:0; background:var(--accent); border-radius:3px}
 .sb-cost{font-size:12px; color:var(--ink-3); font-variant-numeric:tabular-nums}
 
+/* ---------- 配課矩陣 ---------- */
+table.mx{min-width:760px}
+table.mx th.mx-h{text-align:center; padding:7px 4px; font-size:10px; letter-spacing:.02em}
+td.mx-c{
+  text-align:center; padding:4px 5px; cursor:pointer; border:1px solid transparent;
+  border-bottom:1px solid var(--line); min-width:52px; line-height:1.25;
+}
+td.mx-c:hover{border-color:var(--accent)}
+td.mx-c.on{box-shadow:inset 0 0 0 2px var(--accent)}
+td.mx-c:focus-visible{outline:2px solid var(--accent); outline-offset:-2px}
+td.mx-c.empty{color:var(--ink-3); opacity:.45; font-size:13px}
+td.mx-c.empty:hover{opacity:1}
+td.mx-c b{font-size:13px; display:block}
+td.mx-c .mx-t{font-size:9.5px; color:var(--ink-3); display:block; white-space:nowrap}
+td.mx-c i.dbl{font-style:normal; font-size:8.5px; color:var(--ink-3);
+  border:1px solid var(--line-2); border-radius:3px; padding:0 2px; vertical-align:1px}
+td.mx-c.r-homeroom{background:var(--homeroom-bg)} td.mx-c.r-homeroom b{color:var(--homeroom)}
+td.mx-c.r-special{background:var(--special-bg)}   td.mx-c.r-special b{color:var(--special)}
+td.mx-c.r-admin{background:var(--admin-bg)}       td.mx-c.r-admin b{color:var(--admin)}
+td.num.over{color:var(--bad); font-weight:600}
+
+
+/* 已被佔用、但可以放上去的格子（放上去＝對調或連動） */
+.cell.rt-ok{box-shadow:inset 0 0 0 2px var(--ok)}
+.cell.rt-ripple{box-shadow:inset 0 0 0 2px var(--warn)}
+.cell.rt-no{opacity:.4}
+/* ---------- 連動調整 ---------- */
+.cell.tgt-rip{background:var(--warn-bg); border:1px dashed var(--warn); cursor:pointer}
+.cell.tgt-rip:hover{box-shadow:0 0 0 2px var(--warn)}
+.mv-row{display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  padding:8px 12px; border:1px solid var(--line); border-radius:6px; background:var(--surface-2); font-size:13px}
+.mv-row.primary{border-color:var(--accent); background:var(--accent-soft)}
+.mv-who{flex:1; min-width:130px}
+.mv-slot{font-size:12px; color:var(--ink-2)}
+.mv-slot.to{color:var(--accent); font-weight:600}
+.mv-arrow{color:var(--ink-3)}
+.mv-room{font-size:11px; color:var(--ink-3); border:1px solid var(--line-2); border-radius:4px; padding:1px 6px}
+
 /* 獨立網頁自己的主題切換（Artifact 版本由外殼提供，不需要這個） */
 .theme-btn{
   appearance:none; background:var(--surface); color:var(--ink-2);
@@ -571,9 +609,17 @@ function renderHandoff(){
 </script>
 <script>
 /* ============ 步驟 4 導師自排（可拖動，即時檢核） ============ */
-const P2 = {};                       // class_id -> 導師課的目前位置（可編輯）
-D.placements.filter(x=>x.ph===2).forEach(x=>{ (P2[x.c] = P2[x.c] || []).push({...x}); });
-const P2_ORIG = JSON.parse(JSON.stringify(P2));
+// 導師的課直接改 D.placements 裡的那一筆，不另外存一份 —— 兩份真相會讓
+// 「課表檢視」與「連動調整」讀到過期的位置。
+function hrLessons(cid){ return D.placements.filter(p=>p.ph===2 && p.c===cid); }
+let P2_ORIG = {};
+function snapshotP2(){
+  P2_ORIG = {};
+  Object.keys(D.classes).forEach(cid=>{
+    P2_ORIG[cid] = hrLessons(cid).map(p=>({slot:p.slot, r:p.r}));
+  });
+}
+snapshotP2();
 let p2Class = Object.keys(D.classes)[0], p2Sel = null;
 
 const canStartDouble = s => perOf(s) < G.periods && !G.breaks.includes(perOf(s));
@@ -582,13 +628,13 @@ function classOccupancy(cid, exceptIdx){
   D.placements.filter(x=>x.ph===1 && x.c===cid).forEach(x=>{
     for(let i=0;i<x.len;i++) occ[x.slot+i] = {...x, locked:true};
   });
-  P2[cid].forEach((x,i)=>{ if(i===exceptIdx) return;
+  hrLessons(cid).forEach((x,i)=>{ if(i===exceptIdx) return;
     for(let k=0;k<x.len;k++) occ[x.slot+k] = {...x, idx:i}; });
   return occ;
 }
 /* 一次移動合不合法，以及為什麼不合法 —— 前端就能判斷，不必呼叫後端 */
 function checkMove(cid, idx, target){
-  const lesson = P2[cid][idx], cls = D.classes[cid];
+  const list = hrLessons(cid), lesson = list[idx], cls = D.classes[cid];
   const cap = D.teachers[lesson.t].cap;
   const need = [...Array(lesson.len)].map((_,i)=>target+i);
   if(lesson.len===2 && !canStartDouble(target)) return {ok:false, why:'連堂不能跨午休或跨日'};
@@ -601,7 +647,7 @@ function checkMove(cid, idx, target){
   }
   const d = dayOf(target);
   let dayCount = lesson.len;
-  P2[cid].forEach((x,i)=>{ if(i===idx) return;
+  list.forEach((x,i)=>{ if(i===idx) return;
     for(let k=0;k<x.len;k++) if(dayOf(x.slot+k)===d) dayCount++; });
   if(dayCount > cap) return {ok:false, why:`超過導師日上限（該日將達 ${dayCount} 節，上限 ${cap} 節）`};
   return {ok:true};
@@ -626,7 +672,11 @@ function renderPhase2(){
     if(id===p2Class)o.selected=true; sel.appendChild(o); });
   sel.onchange=()=>{ p2Class=sel.value; p2Sel=null; renderPhase2(); };
   const reset = el('button','btn','復原');
-  reset.onclick=()=>{ P2[p2Class]=JSON.parse(JSON.stringify(P2_ORIG[p2Class])); p2Sel=null; renderPhase2(); };
+  reset.onclick=()=>{
+    hrLessons(p2Class).forEach((p,i)=>{ const o=(P2_ORIG[p2Class]||[])[i];
+      if(o){ p.slot=o.slot; p.r=o.r; } });
+    p2Sel=null; renderPhase2();
+  };
   ctl.appendChild(sel); ctl.appendChild(reset); h.appendChild(ctl); main.appendChild(h);
 
   const b = el('div','card-b');
@@ -656,7 +706,7 @@ function renderPhase2(){
       if(it && it.idx!=null){ p2Sel = (p2Sel===it.idx ? null : it.idx); renderPhase2(); return; }
       if(p2Sel!=null && !it){
         const m = checkMove(p2Class, p2Sel, s);
-        if(m.ok){ P2[p2Class][p2Sel].slot = s; p2Sel=null; renderPhase2(); }
+        if(m.ok){ hrLessons(p2Class)[p2Sel].slot = s; p2Sel=null; renderPhase2(); }
         else { flash(m.why); }
       }
     }
@@ -678,7 +728,7 @@ function flash(why){
 }
 function renderP2Check(){
   const sb = document.getElementById('p2-check'); if(!sb) return;
-  const cid = p2Class, cls = D.classes[cid], list = P2[cid];
+  const cid = p2Class, cls = D.classes[cid], list = hrLessons(cid);
   const tid = list[0].t, cap = D.teachers[tid].cap;
   const perDay = [...Array(G.days)].map((_,i)=>0);
   const bySubDay = {};
@@ -724,20 +774,38 @@ function renderP2Check(){
 
 /* ============ 步驟 5 三視角檢視 ============ */
 let vMode='class', vKey=null;
-function allPlacements(){
-  return D.placements.filter(x=>x.ph===1).concat(...Object.values(P2));
+let vSel=null, vPlan=null, vStat=null, undoStack=[];
+
+// D.placements 是唯一的真相來源（導師自排與連動調整都直接改它）
+function allPlacements(){ return D.placements; }
+
+function snapAll(){ return D.placements.map(p=>({slot:p.slot, r:p.r})); }
+function applySnap(sn){ sn.forEach((o,i)=>{ D.placements[i].slot=o.slot; D.placements[i].r=o.r; }); }
+
+function applyPlan(plan){
+  undoStack.push(snapAll()); if(undoStack.length>20) undoStack.shift();
+  plan.moves.forEach(m=>{ D.placements[m.i].slot = m.to.slot; D.placements[m.i].r = m.to.room; });
+  snapshotP2();
+  vSel=null; vPlan=null; vStat=null;
+  refreshStats(); renderView();
 }
+
 function renderView(){
   const p = document.getElementById('p-view'); p.innerHTML='';
-  p.appendChild(el('p','lede','班級、教師、教室三種課表是<strong>同一份資料的三種投影</strong>，'
-    +'不要為每個視角各存一份。教務組長改課表看班級視角，老師看自己的，場地組看專科教室的使用率。'
-    +'上一步的調整會直接反映在這裡。'));
+  p.appendChild(el('p','lede','三種課表是<strong>同一份資料的三種投影</strong>。'
+    +'點一堂課再點目標時段就能調整 —— '
+    +'<span style="color:var(--ok)">綠色</span>可直接放，'
+    +'<span style="color:var(--warn)">黃色</span>要<strong>連帶挪動別的課</strong>（會先讓你確認），'
+    +'<span style="color:var(--bad)">紅色</span>放不了。'
+    +'<br>科任老師同一時段在別班有課、專科教室被別班佔用 —— 所以挪一堂音樂課，'
+    +'常常得連帶挪動另外兩個班的音樂課。'));
 
   const bar = el('div'); bar.style.cssText='display:flex;gap:9px;align-items:center;margin-bottom:16px;flex-wrap:wrap';
   const seg = el('div','seg');
   [['class','班級'],['teacher','教師'],['room','教室']].forEach(([m,t])=>{
     const b=el('button',null,t); b.setAttribute('aria-pressed', m===vMode);
-    b.onclick=()=>{ vMode=m; vKey=null; renderView(); }; seg.appendChild(b);
+    b.onclick=()=>{ vMode=m; vKey=null; vSel=null; vPlan=null; vStat=null; renderView(); };
+    seg.appendChild(b);
   });
   const sel = el('select');
   const opts = vMode==='class' ? Object.entries(D.classes).map(([i,c])=>[i,c.name])
@@ -745,41 +813,152 @@ function renderView(){
     : Object.entries(D.rooms).map(([i,r])=>[i,r.name]);
   if(!vKey) vKey = opts[0][0];
   opts.forEach(([id,n])=>{ const o=el('option',null,n); o.value=id; if(id===vKey)o.selected=true; sel.appendChild(o); });
-  sel.onchange=()=>{ vKey=sel.value; renderView(); };
-  bar.appendChild(seg); bar.appendChild(sel); p.appendChild(bar);
+  sel.onchange=()=>{ vKey=sel.value; vSel=null; vPlan=null; vStat=null; renderView(); };
+  bar.appendChild(seg); bar.appendChild(sel);
+  const undo = el('button','btn','復原'); undo.disabled = !undoStack.length;
+  undo.onclick=()=>{ const sn=undoStack.pop(); if(sn){ applySnap(sn); snapshotP2();
+    vSel=null; vPlan=null; vStat=null; refreshStats(); renderView(); } };
+  bar.appendChild(undo);
+  if(vSel!=null){
+    const cancel = el('button','btn','取消選取');
+    cancel.onclick=()=>{ vSel=null; vPlan=null; vStat=null; renderView(); };
+    bar.appendChild(cancel);
+  }
+  p.appendChild(bar);
 
-  const all = allPlacements();
-  const mine = all.filter(x => vMode==='class' ? x.c===vKey : vMode==='teacher' ? x.t===vKey : x.r===vKey);
+  const mine = D.placements.filter(x => vMode==='class' ? x.c===vKey
+    : vMode==='teacher' ? x.t===vKey : x.r===vKey);
   const occ = {}; mine.forEach(x=>{ occ[x.slot]=x; });
   const blocked = vMode==='class' ? D.classes[vKey].blocked
                 : vMode==='teacher' ? teacherHardBlocked(vKey) : [];
 
   const card = el('div','card');
-  const title = vMode==='class' ? D.classes[vKey].name : vMode==='teacher' ? D.teachers[vKey].name : D.rooms[vKey].name;
+  const title = vMode==='class' ? D.classes[vKey].name
+    : vMode==='teacher' ? D.teachers[vKey].name : D.rooms[vKey].name;
   const slots = mine.reduce((n,x)=>n+x.len,0);
   const h = el('div','card-h', `<h3>${title}</h3>`);
   h.appendChild(el('div','legend', `<span class="mono">${slots} 節</span>`
     + (vMode==='room' ? `<span class="mono">使用率 ${Math.round(slots/(G.days*G.periods)*100)}%</span>` : '')));
   card.appendChild(h);
+
   const b = el('div','card-b');
-  b.appendChild(grid({occupied:occ, blocked, cellFn:(s,it,bl)=> it
-    ? lessonCell(it,{sub2: vMode==='class' ? 'teacher' : 'class'})
-    : emptyCell(bl)}));
+  b.appendChild(grid({occupied:occ, blocked, cellFn:(s,it,bl)=>{
+    if(it){
+      const c = lessonCell(it,{sub2: vMode==='class' ? 'teacher' : 'class', movable:true});
+      if(vSel!=null && D.placements[vSel]===it) c.classList.add('sel');
+      else if(vStat && vStat[s]) c.classList.add('rt-'+vStat[s]);
+      return c;
+    }
+    const c = emptyCell(bl);
+    if(vStat && !bl){
+      const st = vStat[s];
+      if(st==='ok'){ c.classList.add('tgt-ok'); c.appendChild(el('div','t2','放這裡')); }
+      else if(st==='ripple'){ c.classList.add('tgt-rip'); c.appendChild(el('div','t2','需連動')); }
+      else if(st==='no') c.classList.add('tgt-no');
+    }
+    return c;
+  }, onCell:(s,it)=>{
+    const idx = it ? D.placements.indexOf(it) : null;
+    if(vSel==null){                                  // 還沒選 → 選起來
+      if(idx!=null){ vSel=idx; vPlan=null; vStat=computeStatus(idx); renderView(); }
+      return;
+    }
+    if(idx===vSel){                                  // 再點自己 → 取消
+      vSel=null; vStat=null; vPlan=null; renderView(); return;
+    }
+    // 已選取時點任何一格都是「移到這裡」—— 包含別堂課上面（也就是對調），
+    // 因為把一堂課拖到另一堂課上面去換，才是大家最直覺的動作
+    const plan = planMove(vSel, s);
+    if(!plan.ok){ showViewMsg('note bad', '不能放這裡：'+plan.reason); return; }
+    if(plan.moves.length===1) applyPlan(plan);
+    else { vPlan = {plan, target:s}; renderView(); }
+  }}));
+  const lg = el('div','legend'); lg.style.marginTop='12px';
+  lg.innerHTML = vSel!=null
+    ? '<span>再點一次取消選取；點在別堂課上就是與它對調</span>'
+      +'<span><span class="sw" style="background:var(--ok-bg);border-color:var(--ok)"></span>直接可放</span>'
+      +'<span><span class="sw" style="background:var(--warn-bg);border-color:var(--warn)"></span>需連帶挪動別的課</span>'
+      +'<span><span class="sw" style="background:var(--bad-bg);border-color:var(--bad)"></span>放不了</span>'
+    : '<span>點一堂課開始調整</span>';
+  b.appendChild(lg);
+  const msg = el('div'); msg.id='view-msg'; msg.style.marginTop='10px'; b.appendChild(msg);
   card.appendChild(b); p.appendChild(card);
 
+  if(vPlan) p.appendChild(planPanel());
+
   const ver = el('div'); ver.style.cssText='display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-top:16px';
-  const clash = countClashes(all);
-  [['班級衝堂',clash.c],['教師衝堂',clash.t],['教室衝堂',clash.r],['節數不符',countShort(all)]].forEach(([lab,n])=>{
-    const c=el('div','card'), bb=el('div','card-b');
-    bb.innerHTML = `<div class="eyebrow">${lab}</div>
-      <div class="mono" style="font-size:27px;font-weight:600;margin-top:5px;color:var(--${n?'bad':'ok'})">${n}<span style="font-size:13px;color:var(--ink-3)"> 件</span></div>`;
-    c.appendChild(bb); ver.appendChild(c);
-  });
+  const clash = countClashes(D.placements);
+  [['班級衝堂',clash.c],['教師衝堂',clash.t],['教室衝堂',clash.r],['節數不符',countShort(D.placements)]]
+    .forEach(([lab,n])=>{
+      const c=el('div','card'), bb=el('div','card-b');
+      bb.innerHTML = `<div class="eyebrow">${lab}</div>
+        <div class="mono" style="font-size:27px;font-weight:600;margin-top:5px;color:var(--${n?'bad':'ok'})">${n}<span style="font-size:13px;color:var(--ink-3)"> 件</span></div>`;
+      c.appendChild(bb); ver.appendChild(c);
+    });
   p.appendChild(ver);
   const nb = el('div','note info'); nb.style.marginTop='14px';
-  nb.innerHTML = '這四個數字是<b>硬約束驗證</b>，在每次調整後即時重算。它們必須永遠是 0 —— 只要有一件不是 0，這份課表就不能發布。';
+  nb.innerHTML = '這四個數字每次調整後即時重算，而且<b>永遠會是 0</b> —— '
+    + '連動調整只走合法的落點，不會產生撞堂。';
   p.appendChild(nb);
 }
+
+/* 每一格點下去會怎樣，先算好才能上色 */
+function computeStatus(idx){
+  const b = mkBoard(), out = {};
+  for(let s=0;s<b.ctx.NS;s++) out[s] = slotStatus(b, idx, s);
+  const cur = D.placements[idx];
+  for(let k=0;k<cur.len;k++) out[cur.slot+k] = null;
+  return out;
+}
+function showViewMsg(cls, html){
+  const m = document.getElementById('view-msg'); if(!m) return;
+  m.innerHTML=''; m.appendChild(el('div',cls,html));
+  setTimeout(()=>{ if(m) m.innerHTML=''; }, 3600);
+}
+
+/* 連動調整的確認畫面：套用之前先看清楚有哪些課會跟著動 */
+function planPanel(){
+  const {plan, target} = vPlan;
+  const card = el('div','card'); card.style.marginTop='16px';
+  const lead = plan.moves.find(m=>m.i===vSel) || plan.moves[0];
+  card.appendChild(el('div','card-h','<h3>這次調整會動到 '+plan.moves.length+' 堂課</h3>'));
+  const b = el('div','card-b');
+  const li = (m, primary)=>{
+    const row = el('div','mv-row'+(primary?' primary':''));
+    row.innerHTML = `<span class="chip ${roleOf(m.t)}">${ROLE_TXT[roleOf(m.t)]}</span>
+      <span class="mv-who">${D.classes[m.c].name}　${D.subjects[m.s].name}</span>
+      <span class="mono mv-slot">${G_label(m.from.slot)}</span>
+      <span class="mv-arrow">→</span>
+      <span class="mono mv-slot to">${G_label(m.to.slot)}</span>
+      ${m.from.room!==m.to.room ? `<span class="mv-room">${D.rooms[m.to.room].name}</span>` : ''}`;
+    return row;
+  };
+  b.appendChild(el('div','eyebrow','你要移動的'));
+  const wrap1 = el('div'); wrap1.style.marginTop='7px'; wrap1.appendChild(li(lead,true)); b.appendChild(wrap1);
+  const rest = plan.moves.filter(m=>m!==lead);
+  if(rest.length){
+    const e2 = el('div','eyebrow','連帶要跟著動的'); e2.style.marginTop='16px'; b.appendChild(e2);
+    const wrap2 = el('div'); wrap2.style.cssText='margin-top:7px;display:flex;flex-direction:column;gap:6px';
+    rest.forEach(m=>wrap2.appendChild(li(m,false)));
+    b.appendChild(wrap2);
+    const other = [...new Set(rest.map(m=>m.c))].filter(c=>c!==lead.c);
+    if(other.length){
+      const n = el('div','note warn'); n.style.marginTop='14px';
+      n.innerHTML = `其中 <b>${other.map(c=>D.classes[c].name).join('、')}</b> 是<b>別的班級</b>，`
+        + '在目前這個畫面上看不到。原因是同一位科任老師或同一間專科教室被跨班共用。';
+      b.appendChild(n);
+    }
+  }
+  const act = el('div'); act.style.cssText='display:flex;gap:9px;margin-top:18px;flex-wrap:wrap';
+  const ok = el('button','btn on','套用這次調整');
+  ok.onclick=()=>applyPlan(plan);
+  const no = el('button','btn','取消');
+  no.onclick=()=>{ vPlan=null; renderView(); };
+  act.appendChild(ok); act.appendChild(no); b.appendChild(act);
+  card.appendChild(b); return card;
+}
+function G_label(s){ return '週'+DAYS[dayOf(s)-1]+' 第'+perOf(s)+'節'; }
+
 function countClashes(all){
   const seen={c:new Set(),t:new Set(),r:new Set()}, out={c:0,t:0,r:0};
   all.forEach(x=>{ for(let i=0;i<x.len;i++){ const s=x.slot+i;
@@ -1738,11 +1917,7 @@ function applySolution(res){
     c:p.c, s:p.s, t:p.t, r:p.r, slot:p.slot, len:p.len,
     ph: D.teachers[p.t].role==='homeroom' ? 2 : 1,
   }));
-  Object.keys(P2).forEach(k=>delete P2[k]);
-  D.placements.filter(x=>x.ph===2).forEach(x=>{ (P2[x.c]=P2[x.c]||[]).push({...x}); });
-  Object.keys(P2_ORIG).forEach(k=>delete P2_ORIG[k]);
-  Object.assign(P2_ORIG, JSON.parse(JSON.stringify(P2)));
-  p2Sel = null;
+  snapshotP2(); p2Sel = null; vSel = null; vPlan = null; undoStack.length = 0;
 
   D.handoff.good = handoffReport(D, D.placements.filter(x=>x.ph===1));
   D.handoff.bad = D.handoff.good; D.handoff.stale = true;   // 對照組需另外求解
@@ -1766,14 +1941,343 @@ function refreshStats(){
   ].map(([n,l])=>`<div class="stat"><b>${n}</b><span>${l}</span></div>`).join('');
 }
 
+/* ============ 步驟 2 配課 ============
+   「哪位老師教哪一班的哪一科、一週幾節」。這是排課的輸入，改了它整份課表都要重排。
+   以班級 × 科目的矩陣呈現，因為學校的配課表本來就長這樣 —— 直的看一個班的
+   總節數夠不夠，橫的看一位老師被塞了幾個班。                                */
+
+let aSel = null;                     // 目前編輯的 {c, s}
+
+function classTotal(cid){ return D.requirements.filter(r=>r.c===cid).reduce((n,r)=>n+r.n,0); }
+function classCapacity(cid){
+  return D.grid.days*D.grid.periods - D.classes[cid].blocked.length;
+}
+function reqOf(cid,sid){ return D.requirements.find(r=>r.c===cid && r.s===sid); }
+
+function renderAssign(){
+  if(!TS) TS = loadTS();
+  const p = document.getElementById('p-load'); p.innerHTML='';
+  p.appendChild(el('p','lede','配課決定了排課有沒有解。'
+    +'<strong>直的看一個班的節數夠不夠塞</strong>，<strong>橫的看一位老師被配了幾個班</strong>。'
+    +'點任一格可以改任課老師與節數；改完右邊的檢查會立刻重算。'));
+
+  const cols = el('div','cols wide'); cols.style.gridTemplateColumns='';
+  cols.classList.remove('wide');
+
+  /* ---- 左：檢查與鐘點 ---- */
+  const side = el('div','card');
+  side.appendChild(el('div','card-h','<h3>檢查</h3>'));
+  const sb = el('div','card-b');
+  const issues = feasibilityIssues();
+  sb.appendChild(el('div','note '+(issues.length?'bad':'ok'),
+    issues.length ? '✗ '+issues.join('<br>✗ ')
+                  : '<b>目前的配課排得出來</b><br>班級容量、教師鐘點、教師日上限、專科教室容量都在範圍內。'));
+  const lb = el('div'); lb.style.marginTop='14px';
+  lb.appendChild(el('div','eyebrow','教師鐘點'));
+  const lt = el('div'); lt.style.cssText='margin-top:7px;display:flex;flex-direction:column;gap:5px';
+  TROWS().filter(t=>t.total>0).sort((a,b)=>b.total/b.max - a.total/a.max).forEach(t=>{
+    const pct = Math.min(100, t.total/t.max*100);
+    const row = el('div');
+    row.style.cssText='display:grid;grid-template-columns:1fr auto 62px;gap:8px;align-items:center;font-size:12px';
+    row.innerHTML = `<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.name}</span>
+      <span class="mono" style="color:var(--ink-3)${t.total>t.max?';color:var(--bad);font-weight:600':''}">${t.total}/${t.max}</span>
+      <div class="bar"><i class="${pct>100?'bad':(pct>90?'warn':'')}" style="width:${pct}%"></i></div>`;
+    lt.appendChild(row);
+  });
+  lb.appendChild(lt); sb.appendChild(lb);
+  side.appendChild(sb);
+
+  /* ---- 右：配課矩陣 ---- */
+  const main = el('div','card');
+  const mh = el('div','card-h','<h3>配課表</h3>');
+  mh.appendChild(el('div','legend',
+    '<span><span class="sw" style="background:var(--homeroom-bg);border-color:var(--homeroom-line)"></span>導師</span>'
+    +'<span><span class="sw" style="background:var(--special-bg);border-color:var(--special-line)"></span>科任</span>'
+    +'<span><span class="sw" style="background:var(--admin-bg);border-color:var(--admin-line)"></span>行政</span>'));
+  main.appendChild(mh);
+
+  const wrap = el('div','tbl');
+  const subs = Object.keys(D.subjects).filter(sid=>D.requirements.some(r=>r.s===sid));
+  const t = el('table','mx');
+  t.innerHTML = '<thead><tr><th>班級</th>'
+    + subs.map(sid=>`<th class="mx-h">${D.subjects[sid].name}</th>`).join('')
+    + '<th style="text-align:right">合計</th></tr></thead>';
+  const tb = el('tbody');
+  Object.entries(D.classes).forEach(([cid,cls])=>{
+    const tr = el('tr');
+    const total = classTotal(cid), cap = classCapacity(cid);
+    let html = `<td style="white-space:nowrap">${cls.name}</td>`;
+    subs.forEach(sid=>{
+      const r = reqOf(cid,sid);
+      const on = aSel && aSel.c===cid && aSel.s===sid;
+      if(!r){ html += `<td class="mx-c empty${on?' on':''}" data-c="${cid}" data-s="${sid}">＋</td>`; return; }
+      const role = D.teachers[r.t] ? D.teachers[r.t].role : 'special';
+      const nm = D.teachers[r.t] ? D.teachers[r.t].name : '？';
+      html += `<td class="mx-c r-${role}${on?' on':''}" data-c="${cid}" data-s="${sid}"
+        title="${nm}"><b class="mono">${r.n}</b>${r.d?'<i class="dbl">連</i>':''}
+        <span class="mx-t">${nm.length>4?nm.slice(0,4):nm}</span></td>`;
+    });
+    html += `<td class="num${total>cap?' over':''}">${total}<span style="color:var(--ink-3)">/${cap}</span></td>`;
+    tr.innerHTML = html; tb.appendChild(tr);
+  });
+  t.appendChild(tb); wrap.appendChild(t); main.appendChild(wrap);
+  main.querySelectorAll('.mx-c').forEach(td=>{
+    td.tabIndex = 0;
+    const go = ()=>{ aSel = {c:td.dataset.c, s:td.dataset.s}; renderAssign(); };
+    td.addEventListener('click', go);
+    td.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); go(); } });
+  });
+
+  if(aSel) main.appendChild(assignEditor());
+  cols.appendChild(side); cols.appendChild(main);
+  cols.style.cssText='display:grid;grid-template-columns:250px 1fr;gap:22px;align-items:start';
+  p.appendChild(cols);
+}
+
+function assignEditor(){
+  const {c:cid, s:sid} = aSel;
+  const r = reqOf(cid,sid);
+  const box = el('div','card-b'); box.style.borderTop='1px solid var(--line)';
+  const head = el('div');
+  head.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap';
+  head.innerHTML = `<div><span class="eyebrow">編輯</span>
+    <div style="font-size:15px;margin-top:2px">${D.classes[cid].name}　${D.subjects[sid].name}</div></div>`;
+  const close = el('button','btn x','✕'); close.type='button';
+  close.onclick=()=>{ aSel=null; renderAssign(); };
+  head.appendChild(close); box.appendChild(head);
+
+  const grid = el('div','form-grid'); grid.style.marginTop='14px';
+  const fld=(label,node,hint)=>{ const w=el('div','fld');
+    w.appendChild(el('label','eyebrow',label)); w.appendChild(node);
+    if(hint) w.appendChild(el('div','hint',hint)); return w; };
+
+  if(!r){
+    const btn = el('button','btn on','新增這一科'); btn.type='button';
+    btn.onclick=()=>{
+      const t = TROWS().find(x=>x.subjects.includes(sid)) || TROWS()[0];
+      D.requirements.push({c:cid, s:sid, n:1, t:t.id, d:0});
+      renderAssign();
+    };
+    box.appendChild(el('div','note info','這個班目前沒有這一科。'));
+    box.lastChild.style.margin='12px 0';
+    box.appendChild(btn);
+    return box;
+  }
+
+  const tsel = el('select');
+  const able = TROWS().filter(t=>t.subjects.includes(sid));
+  const others = TROWS().filter(t=>!t.subjects.includes(sid));
+  const mk=(t,tag)=>{ const o=el('option',null,`${t.name}（${ROLE_TXT[t.role]}　${t.total}/${t.max} 節）${tag||''}`);
+    o.value=t.id; if(t.id===r.t) o.selected=true; return o; };
+  if(able.length){ const g=el('optgroup'); g.label='任教此科';
+    able.forEach(t=>g.appendChild(mk(t))); tsel.appendChild(g); }
+  if(others.length){ const g=el('optgroup'); g.label='其他老師（會自動加上此科）';
+    others.forEach(t=>g.appendChild(mk(t))); tsel.appendChild(g); }
+  tsel.onchange=()=>{
+    r.t = tsel.value;
+    const t = TS.teachers.find(x=>x.id===r.t);
+    if(t && !t.subjects.includes(sid)){ t.subjects.push(sid); saveTS(); }
+    renderAssign();
+  };
+  grid.appendChild(fld('任課老師', tsel));
+
+  const nIn = el('input'); nIn.type='number'; nIn.min='1'; nIn.max='20'; nIn.className='in'; nIn.value=r.n;
+  nIn.oninput=()=>{ r.n=Math.max(1,+nIn.value||1); if(r.d*2>r.n) r.d=Math.floor(r.n/2); renderAssign(); };
+  grid.appendChild(fld('每週節數', nIn,
+    `${D.classes[cid].name} 目前共 ${classTotal(cid)} 節 / 可用 ${classCapacity(cid)} 節`));
+
+  const dIn = el('input'); dIn.type='number'; dIn.min='0'; dIn.max=String(Math.floor(r.n/2));
+  dIn.className='in'; dIn.value=r.d||0;
+  dIn.oninput=()=>{ r.d=Math.max(0,Math.min(Math.floor(r.n/2), +dIn.value||0)); renderAssign(); };
+  grid.appendChild(fld('其中連堂數', dIn, '一個連堂佔兩節，且必須同一天相鄰、不跨午休'));
+  box.appendChild(grid);
+
+  const del = el('button','btn','移除這一科'); del.type='button'; del.style.marginTop='14px';
+  del.onclick=()=>{ if(!confirm(`移除 ${D.classes[cid].name} 的${D.subjects[sid].name}？`)) return;
+    D.requirements.splice(D.requirements.indexOf(r),1); aSel=null; renderAssign(); };
+  box.appendChild(del);
+  box.appendChild(el('div','note warn','配課改動後要按右上角<b>重新排課</b>，課表才會跟著更新。'));
+  box.lastChild.style.marginTop='14px';
+  return box;
+}
+
+/* ============ 連動調整引擎 ============
+   手動把一堂課挪到別的時段時，被擠掉的課必須有地方去。
+
+   為什麼會牽動別班：導師的課只在自己班，挪動不影響外人；但科任老師同一時段
+   在別班有課、專科教室同一時段被別班佔用 —— 所以移動一堂音樂課，可能得連帶
+   挪動另外兩個班的音樂課。這正是手排課表最容易出錯的地方，交給程式算。
+
+   做法：先試直接對調，不行再做「連鎖遷移」（把擋路的課移到別處，必要時再擠
+   走下一層），全程只走合法位置，並以軟性成本挑最不傷課表品質的落點。         */
+
+const RIPPLE_MAX_DEPTH = 3, RIPPLE_MAX_MOVES = 8, RIPPLE_BRANCH = 5;
+
+function mkBoard(){
+  const E = D.placements.map((p,i)=>({i, c:p.c, s:p.s, t:p.t, len:p.len, slot:p.slot, room:p.r}));
+  const b = {E, oc:new Map(), ot:new Map(), or:new Map(), ctx:mkCtx(D)};
+  E.forEach(e=>put(b,e.i,e.slot,e.room));
+  return b;
+}
+function put(b,i,slot,room){
+  const e=b.E[i]; e.slot=slot; e.room=room; e.off=false;
+  for(let k=0;k<e.len;k++){ const s=slot+k;
+    b.oc.set(e.c+'@'+s,i); b.ot.set(e.t+'@'+s,i); b.or.set(room+'@'+s,i); }
+}
+function pull(b,i){
+  const e=b.E[i]; if(e.off) return;
+  for(let k=0;k<e.len;k++){ const s=e.slot+k;
+    b.oc.delete(e.c+'@'+s); b.ot.delete(e.t+'@'+s); b.or.delete(e.room+'@'+s); }
+  e.off = true;
+}
+function snapBoard(b){ return b.E.map(e=>({slot:e.slot, room:e.room, off:!!e.off})); }
+function restoreBoard(b, snap){
+  b.oc.clear(); b.ot.clear(); b.or.clear();
+  snap.forEach((p,i)=>{ const e=b.E[i]; e.slot=p.slot; e.room=p.room; e.off=p.off; });
+  b.E.forEach(e=>{ if(!e.off) put(b,e.i,e.slot,e.room); });
+}
+
+/* 只看硬性限制，不看有沒有人佔著 */
+function hardOk(b,i,slot,room){
+  const e=b.E[i], ctx=b.ctx, g=D.grid;
+  if(!ctx.roomOk({s:e.s,c:e.c}, room)) return false;
+  if(e.len===2 && !ctx.canDbl(slot)) return false;
+  const d = ctx.dayOf(slot);
+  // 當天已排的節數只要數該日的格子，不必掃整份課表
+  let same=0;
+  for(let q=0;q<g.periods;q++) if(b.ot.has(e.t+'@'+((d-1)*g.periods+q))) same++;
+  if(same + e.len > D.teachers[e.t].cap) return false;
+  for(let k=0;k<e.len;k++){ const s=slot+k;
+    if(s>=ctx.NS || ctx.dayOf(s)!==d) return false;
+    if(ctx.cBlocked[e.c].has(s) || ctx.tBlocked[e.t].has(s) || ctx.sBlocked[e.s].has(s)) return false;
+  }
+  return true;
+}
+function blockersAt(b,i,slot,room){
+  const e=b.E[i], out=new Set();
+  for(let k=0;k<e.len;k++){ const s=slot+k;
+    [b.oc.get(e.c+'@'+s), b.ot.get(e.t+'@'+s), b.or.get(room+'@'+s)]
+      .forEach(x=>{ if(x!=null && x!==i) out.add(x); });
+  }
+  return [...out];
+}
+function roomsFor(b,i){ const e=b.E[i]; return b.ctx.candRooms({s:e.s, c:e.c}); }
+function freeSpots(b,i){
+  const out=[];
+  for(let s=0;s<b.ctx.NS;s++) for(const r of roomsFor(b,i))
+    if(hardOk(b,i,s,r) && blockersAt(b,i,s,r).length===0) out.push([s,r]);
+  return out;
+}
+function boardPenalty(b){
+  const pos={}; b.E.forEach(e=>{ if(!e.off) pos[e.i]={slot:e.slot, room:e.room}; });
+  return penalty(b.ctx, {pos}, b.E, {handoff:false});
+}
+
+/* 某一格點下去會怎樣：直接可放／需要連動／完全不能放 */
+function slotStatus(b, i, slot){
+  let any=false;
+  for(const r of roomsFor(b,i)){
+    if(!hardOk(b,i,slot,r)) continue;
+    any=true;
+    if(blockersAt(b,i,slot,r).length===0) return 'ok';
+  }
+  return any ? 'ripple' : 'no';
+}
+
+/* 規劃一次移動，回傳所有要跟著動的課 */
+function planMove(idx, target){
+  const b = mkBoard();
+  const before = snapBoard(b);
+  const rooms = roomsFor(b,idx).filter(r=>hardOk(b,idx,target,r));
+  if(!rooms.length) return {ok:false, reason:whyNot(b, idx, target)};
+  rooms.sort((a,c)=>blockersAt(b,idx,target,a).length - blockersAt(b,idx,target,c).length);
+
+  for(const room of rooms){
+    restoreBoard(b, before);
+    const blockers = blockersAt(b,idx,target,room);
+    const origin = {slot:b.E[idx].slot, room:b.E[idx].room};
+    pull(b, idx);
+    blockers.forEach(x=>pull(b,x));
+    put(b, idx, target, room);
+
+    let done = false;
+    // 最單純的情況：跟擋路的那一堂直接對調
+    if(blockers.length===1){
+      const o = blockers[0];
+      if(roomsFor(b,o).includes(origin.room) && hardOk(b,o,origin.slot,origin.room)
+         && blockersAt(b,o,origin.slot,origin.room).length===0){
+        put(b,o,origin.slot,origin.room); done = true;
+      }
+    }
+    if(!done) done = relocate(b, blockers, 0);
+
+    if(done && b.E.every(e=>!e.off)){
+      const moves = [];
+      b.E.forEach(e=>{
+        const o = before[e.i];
+        if(o.slot!==e.slot || o.room!==e.room)
+          moves.push({i:e.i, c:e.c, s:e.s, t:e.t, len:e.len,
+                      from:{slot:o.slot, room:o.room}, to:{slot:e.slot, room:e.room}});
+      });
+      if(moves.length<=RIPPLE_MAX_MOVES) return {ok:true, moves, cost:boardPenalty(b), room};
+    }
+  }
+  return {ok:false, reason:'被擠掉的課找不到地方放，請試別的時段'};
+}
+
+/* 把被擠掉的課逐一安置；沒有空位就再擠走下一層（深度有限） */
+function relocate(b, pending, depth){
+  if(!pending.length) return true;
+  if(depth > RIPPLE_MAX_DEPTH) return false;
+  const head = pending[0], rest = pending.slice(1);
+
+  const spots = freeSpots(b, head).map(([s,r])=>{
+    put(b,head,s,r); const c=boardPenalty(b); pull(b,head); return {s,r,c};
+  }).sort((a,c)=>a.c-c.c).slice(0, RIPPLE_BRANCH);
+  for(const {s,r} of spots){
+    put(b,head,s,r);
+    if(relocate(b, rest, depth)) return true;
+    pull(b,head);
+  }
+
+  if(depth < RIPPLE_MAX_DEPTH){
+    const cands=[];
+    for(let s=0;s<b.ctx.NS;s++) for(const r of roomsFor(b,head)){
+      if(!hardOk(b,head,s,r)) continue;
+      const bl = blockersAt(b,head,s,r);
+      if(bl.length>0 && bl.length<=2) cands.push({s,r,bl});
+    }
+    for(const {s,r,bl} of cands.slice(0, RIPPLE_BRANCH)){
+      const snap = snapBoard(b);
+      bl.forEach(x=>pull(b,x));
+      put(b,head,s,r);
+      if(relocate(b, [...bl, ...rest], depth+1)) return true;
+      restoreBoard(b, snap);
+    }
+  }
+  return false;
+}
+
+function whyNot(b, idx, target){
+  const e=b.E[idx], ctx=b.ctx;
+  if(e.len===2 && !ctx.canDbl(target)) return '連堂不能跨午休或跨日';
+  for(let k=0;k<e.len;k++){ const s=target+k;
+    if(s>=ctx.NS || ctx.dayOf(s)!==ctx.dayOf(target)) return '連堂不能跨日';
+    if(ctx.cBlocked[e.c].has(s)) return `${D.classes[e.c].name}這節不上課`;
+    if(ctx.tBlocked[e.t].has(s)) return `${D.teachers[e.t].name}這個時段不排課`;
+    if(ctx.sBlocked[e.s].has(s)) return `${D.subjects[e.s].name}不排在這一節`;
+  }
+  return `會讓${D.teachers[e.t].name}超過每天 ${D.teachers[e.t].cap} 節的上限`;
+}
+
 /* ============ 導覽 ============ */
 const STEPS = [
   ['p-teachers','老師設定', renderTeachers],
-  ['p-load','配課與鐘點', renderLoad],
+  ['p-load','配課', renderAssign],
   ['p-phase1','科任／行政排課', renderPhase1],
   ['p-handoff','交接檢查', renderHandoff],
   ['p-phase2','導師自排', renderPhase2],
-  ['p-view','課表檢視', renderView],
+  ['p-view','課表檢視與調整', renderView],
 ];
 const nav = document.getElementById('steps');
 STEPS.forEach(([id,label],i)=>{
