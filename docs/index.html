@@ -298,6 +298,38 @@ td.num.over{color:var(--bad); font-weight:600}
 .mv-arrow{color:var(--ink-3)}
 .mv-room{font-size:11px; color:var(--ink-3); border:1px solid var(--line-2); border-radius:4px; padding:1px 6px}
 
+/* ---------- 時段勾選格 ---------- */
+.sp{display:grid; gap:3px; min-width:340px}
+.sp-h{font-size:11px; color:var(--ink-3); text-align:center; padding:3px 0}
+.sp-p{font-family:"IBM Plex Mono",monospace; font-size:10.5px; color:var(--ink-3);
+  display:flex; align-items:center; justify-content:center}
+.sp-c{
+  appearance:none; height:30px; border:1px solid var(--line-2); border-radius:4px;
+  background:var(--surface-2); color:var(--ink-3); font-family:inherit; font-size:11px; cursor:pointer;
+}
+.sp-c:hover{border-color:var(--accent)}
+.sp-c.on{background:var(--sunken); color:var(--ink-2); border-style:dashed;
+  background-image:repeating-linear-gradient(45deg,transparent,transparent 4px,var(--line) 4px,var(--line) 8px)}
+.sp-c:focus-visible{outline:2px solid var(--accent); outline-offset:1px}
+
+/* ---------- 列印 ---------- */
+#print-area{display:none}
+@media print{
+  body>*{display:none!important}
+  #print-area{display:block!important}
+  .pr-page{page-break-after:always; padding:0 0 18px}
+  .pr-page:last-child{page-break-after:auto}
+  .pr-t{font-family:"Noto Serif TC",serif; font-size:17pt; margin:0 0 10pt; color:#000}
+  table.pr-tt{width:100%; border-collapse:collapse; font-size:9pt; color:#000}
+  table.pr-tt th,table.pr-tt td{border:1px solid #999; padding:4pt 3pt; text-align:center;
+    height:40pt; vertical-align:middle}
+  table.pr-tt th{background:#eee; font-weight:600; font-size:8.5pt}
+  table.pr-tt td b{display:block; font-size:10pt; font-weight:600}
+  table.pr-tt td span{display:block; font-size:7.5pt; color:#555; margin-top:1pt}
+  table.pr-tt td.pr-x{background:repeating-linear-gradient(45deg,#fff,#fff 4pt,#e8e8e8 4pt,#e8e8e8 8pt)}
+  @page{margin:14mm}
+}
+
 /* 獨立網頁自己的主題切換（Artifact 版本由外殼提供，不需要這個） */
 .theme-btn{
   appearance:none; background:var(--surface); color:var(--ink-2);
@@ -329,7 +361,8 @@ td.num.over{color:var(--bad); font-weight:600}
 <div class="wrap" id="solve-host"></div>
 
 <main class="wrap">
- <section class="panel" id="p-teachers" role="tabpanel"></section>
+ <section class="panel" id="p-setup" role="tabpanel"></section>
+ <section class="panel" id="p-teachers" role="tabpanel" hidden></section>
  <section class="panel" id="p-load" role="tabpanel" hidden></section>
  <section class="panel" id="p-phase1" role="tabpanel" hidden></section>
  <section class="panel" id="p-handoff" role="tabpanel" hidden></section>
@@ -337,9 +370,39 @@ td.num.over{color:var(--bad); font-weight:600}
  <section class="panel" id="p-view" role="tabpanel" hidden></section>
 </main>
 
+<div id="print-area" aria-hidden="true"></div>
+
 <script type="application/json" id="data">{"grid":{"days":5,"periods":7,"morning":[1,2,3,4],"breaks":[4]},"subjects":{"CH":{"name":"國語","room":null,"core":true},"MA":{"name":"數學","room":null,"core":true},"LI":{"name":"生活","room":null,"core":false},"SO":{"name":"社會","room":null,"core":false},"IN":{"name":"綜合","room":null,"core":false},"HE":{"name":"健康","room":null,"core":false},"FX":{"name":"彈性","room":null,"core":false},"SC":{"name":"自然","room":"science","core":false},"EN":{"name":"英語","room":null,"core":false},"PE":{"name":"體育","room":"pe","core":false},"MU":{"name":"音樂","room":"music","core":false},"AR":{"name":"美勞","room":"art","core":false},"CO":{"name":"電腦","room":"computer","core":false}},"rooms":{"SCI1":{"name":"自然教室","type":"science"},"PE1":{"name":"活動中心","type":"pe"},"MUS1":{"name":"音樂教室","type":"music"},"ART1":{"name":"美勞教室","type":"art"},"COM1":{"name":"電腦教室","type":"computer"},"R101":{"name":"101 教室","type":"homeroom"},"R102":{"name":"102 教室","type":"homeroom"},"R201":{"name":"201 教室","type":"homeroom"},"R202":{"name":"202 教室","type":"homeroom"},"R301":{"name":"301 教室","type":"homeroom"},"R302":{"name":"302 教室","type":"homeroom"},"R401":{"name":"401 教室","type":"homeroom"},"R402":{"name":"402 教室","type":"homeroom"},"R501":{"name":"501 教室","type":"homeroom"},"R502":{"name":"502 教室","type":"homeroom"},"R601":{"name":"601 教室","type":"homeroom"},"R602":{"name":"602 教室","type":"homeroom"}},"classes":{"101":{"name":"1 年 1 班","grade":1,"room":"R101","blocked":[6,13,20,27,34,18,19]},"102":{"name":"1 年 2 班","grade":1,"room":"R102","blocked":[6,13,20,27,34,18,19]},"201":{"name":"2 年 1 班","grade":2,"room":"R201","blocked":[6,13,20,27,34,18,19]},"202":{"name":"2 年 2 班","grade":2,"room":"R202","blocked":[6,13,20,27,34,18,19]},"301":{"name":"3 年 1 班","grade":3,"room":"R301","blocked":[18,19,20]},"302":{"name":"3 年 2 班","grade":3,"room":"R302","blocked":[18,19,20]},"401":{"name":"4 年 1 班","grade":4,"room":"R401","blocked":[18,19,20]},"402":{"name":"4 年 2 班","grade":4,"room":"R402","blocked":[18,19,20]},"501":{"name":"5 年 1 班","grade":5,"room":"R501","blocked":[19,20]},"502":{"name":"5 年 2 班","grade":5,"room":"R502","blocked":[19,20]},"601":{"name":"6 年 1 班","grade":6,"room":"R601","blocked":[19,20]},"602":{"name":"6 年 2 班","grade":6,"room":"R602","blocked":[19,20]}},"teachers":{"S_MU":{"name":"音樂老師","role":"special","max":20,"cap":5},"S_AR":{"name":"美勞老師","role":"special","max":20,"cap":5},"A_STU":{"name":"學務主任","role":"admin","max":10,"cap":3},"S_CO":{"name":"電腦老師","role":"special","max":20,"cap":5},"A_ACA":{"name":"教務主任","role":"admin","max":10,"cap":3},"S_PE":{"name":"體育老師","role":"special","max":26,"cap":6},"S_SC":{"name":"自然老師","role":"special","max":26,"cap":6},"S_EN1":{"name":"英語老師甲","role":"special","max":20,"cap":5},"S_EN2":{"name":"英語老師乙","role":"special","max":20,"cap":5},"HR_101":{"name":"101 導師","role":"homeroom","max":24,"cap":6},"HR_102":{"name":"102 導師","role":"homeroom","max":24,"cap":6},"HR_201":{"name":"201 導師","role":"homeroom","max":24,"cap":6},"HR_202":{"name":"202 導師","role":"homeroom","max":24,"cap":6},"HR_301":{"name":"301 導師","role":"homeroom","max":24,"cap":6},"HR_302":{"name":"302 導師","role":"homeroom","max":24,"cap":6},"HR_401":{"name":"401 導師","role":"homeroom","max":24,"cap":6},"HR_402":{"name":"402 導師","role":"homeroom","max":24,"cap":6},"HR_501":{"name":"501 導師","role":"homeroom","max":24,"cap":6},"HR_502":{"name":"502 導師","role":"homeroom","max":24,"cap":6},"HR_601":{"name":"601 導師","role":"homeroom","max":24,"cap":6},"HR_602":{"name":"602 導師","role":"homeroom","max":24,"cap":6}},"requirements":[{"c":"101","s":"CH","n":8,"t":"HR_101","d":0},{"c":"101","s":"MA","n":4,"t":"HR_101","d":0},{"c":"101","s":"LI","n":4,"t":"HR_101","d":1},{"c":"101","s":"IN","n":2,"t":"HR_101","d":1},{"c":"101","s":"HE","n":1,"t":"HR_101","d":0},{"c":"101","s":"MU","n":1,"t":"S_MU","d":0},{"c":"101","s":"PE","n":2,"t":"S_PE","d":0},{"c":"101","s":"AR","n":1,"t":"S_AR","d":0},{"c":"101","s":"CO","n":1,"t":"S_CO","d":0},{"c":"102","s":"CH","n":8,"t":"HR_102","d":0},{"c":"102","s":"MA","n":4,"t":"HR_102","d":0},{"c":"102","s":"LI","n":4,"t":"HR_102","d":1},{"c":"102","s":"IN","n":2,"t":"HR_102","d":1},{"c":"102","s":"HE","n":1,"t":"HR_102","d":0},{"c":"102","s":"MU","n":1,"t":"S_MU","d":0},{"c":"102","s":"PE","n":2,"t":"S_PE","d":0},{"c":"102","s":"AR","n":1,"t":"A_STU","d":0},{"c":"102","s":"CO","n":1,"t":"A_ACA","d":0},{"c":"201","s":"CH","n":8,"t":"HR_201","d":0},{"c":"201","s":"MA","n":4,"t":"HR_201","d":0},{"c":"201","s":"LI","n":4,"t":"HR_201","d":1},{"c":"201","s":"IN","n":2,"t":"HR_201","d":1},{"c":"201","s":"HE","n":1,"t":"HR_201","d":0},{"c":"201","s":"MU","n":1,"t":"S_MU","d":0},{"c":"201","s":"PE","n":2,"t":"S_PE","d":0},{"c":"201","s":"AR","n":1,"t":"S_AR","d":0},{"c":"201","s":"CO","n":1,"t":"S_CO","d":0},{"c":"202","s":"CH","n":8,"t":"HR_202","d":0},{"c":"202","s":"MA","n":4,"t":"HR_202","d":0},{"c":"202","s":"LI","n":4,"t":"HR_202","d":1},{"c":"202","s":"IN","n":2,"t":"HR_202","d":1},{"c":"202","s":"HE","n":1,"t":"HR_202","d":0},{"c":"202","s":"MU","n":1,"t":"S_MU","d":0},{"c":"202","s":"PE","n":2,"t":"S_PE","d":0},{"c":"202","s":"AR","n":1,"t":"A_STU","d":0},{"c":"202","s":"CO","n":1,"t":"A_ACA","d":0},{"c":"301","s":"CH","n":6,"t":"HR_301","d":0},{"c":"301","s":"MA","n":4,"t":"HR_301","d":0},{"c":"301","s":"SO","n":3,"t":"HR_301","d":0},{"c":"301","s":"IN","n":3,"t":"HR_301","d":1},{"c":"301","s":"HE","n":1,"t":"HR_301","d":0},{"c":"301","s":"FX","n":3,"t":"HR_301","d":0},{"c":"301","s":"MU","n":1,"t":"S_MU","d":0},{"c":"301","s":"PE","n":2,"t":"S_PE","d":0},{"c":"301","s":"AR","n":1,"t":"S_AR","d":0},{"c":"301","s":"CO","n":1,"t":"S_CO","d":0},{"c":"301","s":"EN","n":2,"t":"S_EN1","d":0},{"c":"301","s":"SC","n":3,"t":"S_SC","d":0},{"c":"302","s":"CH","n":6,"t":"HR_302","d":0},{"c":"302","s":"MA","n":4,"t":"HR_302","d":0},{"c":"302","s":"SO","n":3,"t":"HR_302","d":0},{"c":"302","s":"IN","n":3,"t":"HR_302","d":1},{"c":"302","s":"HE","n":1,"t":"HR_302","d":0},{"c":"302","s":"FX","n":3,"t":"HR_302","d":0},{"c":"302","s":"MU","n":1,"t":"S_MU","d":0},{"c":"302","s":"PE","n":2,"t":"S_PE","d":0},{"c":"302","s":"AR","n":1,"t":"A_STU","d":0},{"c":"302","s":"CO","n":1,"t":"A_ACA","d":0},{"c":"302","s":"EN","n":2,"t":"S_EN2","d":0},{"c":"302","s":"SC","n":3,"t":"S_SC","d":0},{"c":"401","s":"CH","n":6,"t":"HR_401","d":0},{"c":"401","s":"MA","n":4,"t":"HR_401","d":0},{"c":"401","s":"SO","n":3,"t":"HR_401","d":0},{"c":"401","s":"IN","n":3,"t":"HR_401","d":1},{"c":"401","s":"HE","n":1,"t":"HR_401","d":0},{"c":"401","s":"FX","n":3,"t":"HR_401","d":0},{"c":"401","s":"MU","n":1,"t":"S_MU","d":0},{"c":"401","s":"PE","n":2,"t":"S_PE","d":0},{"c":"401","s":"AR","n":1,"t":"S_AR","d":0},{"c":"401","s":"CO","n":1,"t":"S_CO","d":0},{"c":"401","s":"EN","n":2,"t":"S_EN1","d":0},{"c":"401","s":"SC","n":3,"t":"S_SC","d":0},{"c":"402","s":"CH","n":6,"t":"HR_402","d":0},{"c":"402","s":"MA","n":4,"t":"HR_402","d":0},{"c":"402","s":"SO","n":3,"t":"HR_402","d":0},{"c":"402","s":"IN","n":3,"t":"HR_402","d":1},{"c":"402","s":"HE","n":1,"t":"HR_402","d":0},{"c":"402","s":"FX","n":3,"t":"HR_402","d":0},{"c":"402","s":"MU","n":1,"t":"S_MU","d":0},{"c":"402","s":"PE","n":2,"t":"S_PE","d":0},{"c":"402","s":"AR","n":1,"t":"A_STU","d":0},{"c":"402","s":"CO","n":1,"t":"A_ACA","d":0},{"c":"402","s":"EN","n":2,"t":"S_EN2","d":0},{"c":"402","s":"SC","n":3,"t":"S_SC","d":0},{"c":"501","s":"CH","n":6,"t":"HR_501","d":0},{"c":"501","s":"MA","n":4,"t":"HR_501","d":0},{"c":"501","s":"SO","n":3,"t":"HR_501","d":0},{"c":"501","s":"IN","n":3,"t":"HR_501","d":1},{"c":"501","s":"HE","n":1,"t":"HR_501","d":0},{"c":"501","s":"FX","n":5,"t":"HR_501","d":0},{"c":"501","s":"MU","n":1,"t":"S_MU","d":0},{"c":"501","s":"PE","n":2,"t":"S_PE","d":0},{"c":"501","s":"AR","n":1,"t":"S_AR","d":0},{"c":"501","s":"CO","n":1,"t":"S_CO","d":0},{"c":"501","s":"EN","n":2,"t":"S_EN1","d":0},{"c":"501","s":"SC","n":3,"t":"S_SC","d":0},{"c":"502","s":"CH","n":6,"t":"HR_502","d":0},{"c":"502","s":"MA","n":4,"t":"HR_502","d":0},{"c":"502","s":"SO","n":3,"t":"HR_502","d":0},{"c":"502","s":"IN","n":3,"t":"HR_502","d":1},{"c":"502","s":"HE","n":1,"t":"HR_502","d":0},{"c":"502","s":"FX","n":5,"t":"HR_502","d":0},{"c":"502","s":"MU","n":1,"t":"S_MU","d":0},{"c":"502","s":"PE","n":2,"t":"S_PE","d":0},{"c":"502","s":"AR","n":1,"t":"A_STU","d":0},{"c":"502","s":"CO","n":1,"t":"A_ACA","d":0},{"c":"502","s":"EN","n":2,"t":"S_EN2","d":0},{"c":"502","s":"SC","n":3,"t":"S_SC","d":0},{"c":"601","s":"CH","n":6,"t":"HR_601","d":0},{"c":"601","s":"MA","n":4,"t":"HR_601","d":0},{"c":"601","s":"SO","n":3,"t":"HR_601","d":0},{"c":"601","s":"IN","n":3,"t":"HR_601","d":1},{"c":"601","s":"HE","n":1,"t":"HR_601","d":0},{"c":"601","s":"FX","n":5,"t":"HR_601","d":0},{"c":"601","s":"MU","n":1,"t":"S_MU","d":0},{"c":"601","s":"PE","n":2,"t":"S_PE","d":0},{"c":"601","s":"AR","n":1,"t":"S_AR","d":0},{"c":"601","s":"CO","n":1,"t":"S_CO","d":0},{"c":"601","s":"EN","n":2,"t":"S_EN1","d":0},{"c":"601","s":"SC","n":3,"t":"S_SC","d":0},{"c":"602","s":"CH","n":6,"t":"HR_602","d":0},{"c":"602","s":"MA","n":4,"t":"HR_602","d":0},{"c":"602","s":"SO","n":3,"t":"HR_602","d":0},{"c":"602","s":"IN","n":3,"t":"HR_602","d":1},{"c":"602","s":"HE","n":1,"t":"HR_602","d":0},{"c":"602","s":"FX","n":5,"t":"HR_602","d":0},{"c":"602","s":"MU","n":1,"t":"S_MU","d":0},{"c":"602","s":"PE","n":2,"t":"S_PE","d":0},{"c":"602","s":"AR","n":1,"t":"A_STU","d":0},{"c":"602","s":"CO","n":1,"t":"A_ACA","d":0},{"c":"602","s":"EN","n":2,"t":"S_EN2","d":0},{"c":"602","s":"SC","n":3,"t":"S_SC","d":0}],"constraints":[{"kind":"TEACHER_UNAVAILABLE","params":{"teacher":"A_ACA","days":[1],"periods":[1,2]},"hard":true,"weight":1},{"kind":"TEACHER_UNAVAILABLE","params":{"teacher":"A_STU","days":[1],"periods":[1,2]},"hard":true,"weight":1},{"kind":"HOMEROOM_DAY_CAPACITY","params":{},"hard":false,"weight":1},{"kind":"HOMEROOM_DAY_OFF","params":{},"hard":false,"weight":1},{"kind":"RESERVE_MORNING","params":{"max_per_class":4},"hard":false,"weight":1},{"kind":"SPECIAL_BALANCE","params":{"max_per_day":3},"hard":false,"weight":1},{"kind":"TEACHER_DAY_OFF","params":{"teacher":"S_EN1","day":3},"hard":false,"weight":200},{"kind":"TEACHER_UNAVAILABLE","params":{"teacher":"S_MU","days":[5],"periods":[5,6,7]},"hard":true,"weight":1},{"kind":"TEACHER_DAY_OFF","params":{"teacher":"HR_101","day":5},"hard":false,"weight":150},{"kind":"TEACHER_MAX_PER_DAY","params":{"teacher":"S_PE","max":5},"hard":false,"weight":1},{"kind":"TEACHER_MAX_PER_DAY","params":{"teacher":"S_SC","max":5},"hard":false,"weight":1},{"kind":"TEACHER_MAX_RUN","params":{"teacher":"S_PE","max":3},"hard":false,"weight":1},{"kind":"TEACHER_COMPACT","params":{"teacher":"S_MU"},"hard":false,"weight":1},{"kind":"TEACHER_COMPACT","params":{"teacher":"S_CO"},"hard":false,"weight":1},{"kind":"TEACHER_COMPACT","params":{"teacher":"S_AR"},"hard":false,"weight":1},{"kind":"SUBJECT_SPREAD","params":{"subject":"CH","max":2},"hard":false,"weight":1},{"kind":"SUBJECT_SPREAD","params":{"subject":"MA","max":1},"hard":false,"weight":1},{"kind":"SUBJECT_SPREAD","params":{"subject":"EN","max":1},"hard":false,"weight":1},{"kind":"SUBJECT_NOT_IN","params":{"subject":"PE","periods":[5]},"hard":false,"weight":1},{"kind":"CORE_IN_MORNING","params":{},"hard":false,"weight":1}],"loads":[{"id":"S_MU","name":"音樂老師","role":"special","total":12,"max":20,"cap":5,"classes":["101","102","201","202","301","302","401","402","501","502","601","602"],"subjects":["MU"]},{"id":"S_AR","name":"美勞老師","role":"special","total":6,"max":20,"cap":5,"classes":["101","201","301","401","501","601"],"subjects":["AR"]},{"id":"A_STU","name":"學務主任","role":"admin","total":6,"max":10,"cap":3,"classes":["102","202","302","402","502","602"],"subjects":["AR"]},{"id":"S_CO","name":"電腦老師","role":"special","total":6,"max":20,"cap":5,"classes":["101","201","301","401","501","601"],"subjects":["CO"]},{"id":"A_ACA","name":"教務主任","role":"admin","total":6,"max":10,"cap":3,"classes":["102","202","302","402","502","602"],"subjects":["CO"]},{"id":"S_PE","name":"體育老師","role":"special","total":24,"max":26,"cap":6,"classes":["101","102","201","202","301","302","401","402","501","502","601","602"],"subjects":["PE"]},{"id":"S_SC","name":"自然老師","role":"special","total":24,"max":26,"cap":6,"classes":["301","302","401","402","501","502","601","602"],"subjects":["SC"]},{"id":"S_EN1","name":"英語老師甲","role":"special","total":8,"max":20,"cap":5,"classes":["301","401","501","601"],"subjects":["EN"]},{"id":"S_EN2","name":"英語老師乙","role":"special","total":8,"max":20,"cap":5,"classes":["302","402","502","602"],"subjects":["EN"]},{"id":"HR_101","name":"101 導師","role":"homeroom","total":19,"max":24,"cap":6,"classes":["101"],"subjects":["CH","HE","IN","LI","MA"]},{"id":"HR_102","name":"102 導師","role":"homeroom","total":19,"max":24,"cap":6,"classes":["102"],"subjects":["CH","HE","IN","LI","MA"]},{"id":"HR_201","name":"201 導師","role":"homeroom","total":19,"max":24,"cap":6,"classes":["201"],"subjects":["CH","HE","IN","LI","MA"]},{"id":"HR_202","name":"202 導師","role":"homeroom","total":19,"max":24,"cap":6,"classes":["202"],"subjects":["CH","HE","IN","LI","MA"]},{"id":"HR_301","name":"301 導師","role":"homeroom","total":20,"max":24,"cap":6,"classes":["301"],"subjects":["CH","FX","HE","IN","MA","SO"]},{"id":"HR_302","name":"302 導師","role":"homeroom","total":20,"max":24,"cap":6,"classes":["302"],"subjects":["CH","FX","HE","IN","MA","SO"]},{"id":"HR_401","name":"401 導師","role":"homeroom","total":20,"max":24,"cap":6,"classes":["401"],"subjects":["CH","FX","HE","IN","MA","SO"]},{"id":"HR_402","name":"402 導師","role":"homeroom","total":20,"max":24,"cap":6,"classes":["402"],"subjects":["CH","FX","HE","IN","MA","SO"]},{"id":"HR_501","name":"501 導師","role":"homeroom","total":22,"max":24,"cap":6,"classes":["501"],"subjects":["CH","FX","HE","IN","MA","SO"]},{"id":"HR_502","name":"502 導師","role":"homeroom","total":22,"max":24,"cap":6,"classes":["502"],"subjects":["CH","FX","HE","IN","MA","SO"]},{"id":"HR_601","name":"601 導師","role":"homeroom","total":22,"max":24,"cap":6,"classes":["601"],"subjects":["CH","FX","HE","IN","MA","SO"]},{"id":"HR_602","name":"602 導師","role":"homeroom","total":22,"max":24,"cap":6,"classes":["602"],"subjects":["CH","FX","HE","IN","MA","SO"]}],"placements":[{"c":"501","s":"PE","t":"S_PE","r":"PE1","slot":0,"len":1,"ph":1},{"c":"201","s":"AR","t":"S_AR","r":"ART1","slot":1,"len":1,"ph":1},{"c":"301","s":"MU","t":"S_MU","r":"MUS1","slot":1,"len":1,"ph":1},{"c":"302","s":"PE","t":"S_PE","r":"PE1","slot":1,"len":1,"ph":1},{"c":"102","s":"CO","t":"A_ACA","r":"COM1","slot":2,"len":1,"ph":1},{"c":"302","s":"SC","t":"S_SC","r":"SCI1","slot":2,"len":1,"ph":1},{"c":"402","s":"EN","t":"S_EN2","r":"R402","slot":2,"len":1,"ph":1},{"c":"201","s":"PE","t":"S_PE","r":"PE1","slot":3,"len":1,"ph":1},{"c":"602","s":"SC","t":"S_SC","r":"SCI1","slot":3,"len":1,"ph":1},{"c":"201","s":"MU","t":"S_MU","r":"MUS1","slot":4,"len":1,"ph":1},{"c":"302","s":"SC","t":"S_SC","r":"SCI1","slot":4,"len":1,"ph":1},{"c":"501","s":"EN","t":"S_EN1","r":"R501","slot":4,"len":1,"ph":1},{"c":"601","s":"AR","t":"S_AR","r":"ART1","slot":4,"len":1,"ph":1},{"c":"202","s":"PE","t":"S_PE","r":"PE1","slot":5,"len":1,"ph":1},{"c":"301","s":"AR","t":"S_AR","r":"ART1","slot":5,"len":1,"ph":1},{"c":"401","s":"EN","t":"S_EN1","r":"R401","slot":5,"len":1,"ph":1},{"c":"502","s":"EN","t":"S_EN2","r":"R502","slot":5,"len":1,"ph":1},{"c":"601","s":"MU","t":"S_MU","r":"MUS1","slot":5,"len":1,"ph":1},{"c":"602","s":"SC","t":"S_SC","r":"SCI1","slot":5,"len":1,"ph":1},{"c":"301","s":"CO","t":"S_CO","r":"COM1","slot":6,"len":1,"ph":1},{"c":"401","s":"PE","t":"S_PE","r":"PE1","slot":6,"len":1,"ph":1},{"c":"502","s":"MU","t":"S_MU","r":"MUS1","slot":6,"len":1,"ph":1},{"c":"601","s":"SC","t":"S_SC","r":"SCI1","slot":6,"len":1,"ph":1},{"c":"602","s":"AR","t":"A_STU","r":"ART1","slot":6,"len":1,"ph":1},{"c":"601","s":"PE","t":"S_PE","r":"PE1","slot":7,"len":1,"ph":1},{"c":"301","s":"PE","t":"S_PE","r":"PE1","slot":8,"len":1,"ph":1},{"c":"302","s":"CO","t":"A_ACA","r":"COM1","slot":8,"len":1,"ph":1},{"c":"502","s":"SC","t":"S_SC","r":"SCI1","slot":8,"len":1,"ph":1},{"c":"102","s":"PE","t":"S_PE","r":"PE1","slot":9,"len":1,"ph":1},{"c":"401","s":"EN","t":"S_EN1","r":"R401","slot":9,"len":1,"ph":1},{"c":"102","s":"MU","t":"S_MU","r":"MUS1","slot":10,"len":1,"ph":1},{"c":"502","s":"AR","t":"A_STU","r":"ART1","slot":10,"len":1,"ph":1},{"c":"602","s":"EN","t":"S_EN2","r":"R602","slot":10,"len":1,"ph":1},{"c":"202","s":"AR","t":"A_STU","r":"ART1","slot":11,"len":1,"ph":1},{"c":"302","s":"MU","t":"S_MU","r":"MUS1","slot":11,"len":1,"ph":1},{"c":"401","s":"SC","t":"S_SC","r":"SCI1","slot":11,"len":1,"ph":1},{"c":"402","s":"EN","t":"S_EN2","r":"R402","slot":11,"len":1,"ph":1},{"c":"401","s":"MU","t":"S_MU","r":"MUS1","slot":12,"len":1,"ph":1},{"c":"402","s":"PE","t":"S_PE","r":"PE1","slot":12,"len":1,"ph":1},{"c":"501","s":"SC","t":"S_SC","r":"SCI1","slot":12,"len":1,"ph":1},{"c":"502","s":"CO","t":"A_ACA","r":"COM1","slot":12,"len":1,"ph":1},{"c":"301","s":"EN","t":"S_EN1","r":"R301","slot":13,"len":1,"ph":1},{"c":"302","s":"SC","t":"S_SC","r":"SCI1","slot":13,"len":1,"ph":1},{"c":"402","s":"MU","t":"S_MU","r":"MUS1","slot":13,"len":1,"ph":1},{"c":"501","s":"PE","t":"S_PE","r":"PE1","slot":13,"len":1,"ph":1},{"c":"601","s":"CO","t":"S_CO","r":"COM1","slot":13,"len":1,"ph":1},{"c":"202","s":"PE","t":"S_PE","r":"PE1","slot":14,"len":1,"ph":1},{"c":"601","s":"SC","t":"S_SC","r":"SCI1","slot":14,"len":1,"ph":1},{"c":"302","s":"PE","t":"S_PE","r":"PE1","slot":15,"len":1,"ph":1},{"c":"402","s":"SC","t":"S_SC","r":"SCI1","slot":15,"len":1,"ph":1},{"c":"502","s":"EN","t":"S_EN2","r":"R502","slot":15,"len":1,"ph":1},{"c":"501","s":"SC","t":"S_SC","r":"SCI1","slot":16,"len":1,"ph":1},{"c":"201","s":"PE","t":"S_PE","r":"PE1","slot":17,"len":1,"ph":1},{"c":"401","s":"SC","t":"S_SC","r":"SCI1","slot":17,"len":1,"ph":1},{"c":"501","s":"CO","t":"S_CO","r":"COM1","slot":17,"len":1,"ph":1},{"c":"502","s":"PE","t":"S_PE","r":"PE1","slot":18,"len":1,"ph":1},{"c":"601","s":"SC","t":"S_SC","r":"SCI1","slot":18,"len":1,"ph":1},{"c":"602","s":"EN","t":"S_EN2","r":"R602","slot":18,"len":1,"ph":1},{"c":"501","s":"AR","t":"S_AR","r":"ART1","slot":21,"len":1,"ph":1},{"c":"502","s":"PE","t":"S_PE","r":"PE1","slot":21,"len":1,"ph":1},{"c":"102","s":"PE","t":"S_PE","r":"PE1","slot":22,"len":1,"ph":1},{"c":"301","s":"SC","t":"S_SC","r":"SCI1","slot":22,"len":1,"ph":1},{"c":"602","s":"SC","t":"S_SC","r":"SCI1","slot":23,"len":1,"ph":1},{"c":"402","s":"PE","t":"S_PE","r":"PE1","slot":24,"len":1,"ph":1},{"c":"102","s":"AR","t":"A_STU","r":"ART1","slot":25,"len":1,"ph":1},{"c":"202","s":"MU","t":"S_MU","r":"MUS1","slot":25,"len":1,"ph":1},{"c":"301","s":"EN","t":"S_EN1","r":"R301","slot":25,"len":1,"ph":1},{"c":"501","s":"SC","t":"S_SC","r":"SCI1","slot":25,"len":1,"ph":1},{"c":"602","s":"CO","t":"A_ACA","r":"COM1","slot":25,"len":1,"ph":1},{"c":"302","s":"EN","t":"S_EN2","r":"R302","slot":26,"len":1,"ph":1},{"c":"401","s":"AR","t":"S_AR","r":"ART1","slot":26,"len":1,"ph":1},{"c":"402","s":"CO","t":"A_ACA","r":"COM1","slot":26,"len":1,"ph":1},{"c":"502","s":"SC","t":"S_SC","r":"SCI1","slot":26,"len":1,"ph":1},{"c":"601","s":"PE","t":"S_PE","r":"PE1","slot":26,"len":1,"ph":1},{"c":"602","s":"MU","t":"S_MU","r":"MUS1","slot":26,"len":1,"ph":1},{"c":"301","s":"PE","t":"S_PE","r":"PE1","slot":27,"len":1,"ph":1},{"c":"401","s":"SC","t":"S_SC","r":"SCI1","slot":27,"len":1,"ph":1},{"c":"501","s":"MU","t":"S_MU","r":"MUS1","slot":27,"len":1,"ph":1},{"c":"601","s":"EN","t":"S_EN1","r":"R601","slot":27,"len":1,"ph":1},{"c":"101","s":"AR","t":"S_AR","r":"ART1","slot":28,"len":1,"ph":1},{"c":"202","s":"CO","t":"A_ACA","r":"COM1","slot":29,"len":1,"ph":1},{"c":"402","s":"SC","t":"S_SC","r":"SCI1","slot":29,"len":1,"ph":1},{"c":"602","s":"PE","t":"S_PE","r":"PE1","slot":29,"len":1,"ph":1},{"c":"101","s":"MU","t":"S_MU","r":"MUS1","slot":30,"len":1,"ph":1},{"c":"401","s":"PE","t":"S_PE","r":"PE1","slot":30,"len":1,"ph":1},{"c":"101","s":"PE","t":"S_PE","r":"PE1","slot":31,"len":1,"ph":1},{"c":"301","s":"SC","t":"S_SC","r":"SCI1","slot":31,"len":1,"ph":1},{"c":"101","s":"CO","t":"S_CO","r":"COM1","slot":32,"len":1,"ph":1},{"c":"301","s":"SC","t":"S_SC","r":"SCI1","slot":32,"len":1,"ph":1},{"c":"302","s":"EN","t":"S_EN2","r":"R302","slot":32,"len":1,"ph":1},{"c":"402","s":"AR","t":"A_STU","r":"ART1","slot":32,"len":1,"ph":1},{"c":"601","s":"EN","t":"S_EN1","r":"R601","slot":32,"len":1,"ph":1},{"c":"101","s":"PE","t":"S_PE","r":"PE1","slot":33,"len":1,"ph":1},{"c":"201","s":"CO","t":"S_CO","r":"COM1","slot":33,"len":1,"ph":1},{"c":"302","s":"AR","t":"A_STU","r":"ART1","slot":33,"len":1,"ph":1},{"c":"402","s":"SC","t":"S_SC","r":"SCI1","slot":33,"len":1,"ph":1},{"c":"401","s":"CO","t":"S_CO","r":"COM1","slot":34,"len":1,"ph":1},{"c":"501","s":"EN","t":"S_EN1","r":"R501","slot":34,"len":1,"ph":1},{"c":"502","s":"SC","t":"S_SC","r":"SCI1","slot":34,"len":1,"ph":1},{"c":"602","s":"PE","t":"S_PE","r":"PE1","slot":34,"len":1,"ph":1},{"c":"101","s":"HE","t":"HR_101","r":"R101","slot":0,"len":1,"ph":2},{"c":"101","s":"CH","t":"HR_101","r":"R101","slot":1,"len":1,"ph":2},{"c":"101","s":"CH","t":"HR_101","r":"R101","slot":2,"len":1,"ph":2},{"c":"101","s":"MA","t":"HR_101","r":"R101","slot":3,"len":1,"ph":2},{"c":"101","s":"LI","t":"HR_101","r":"R101","slot":4,"len":1,"ph":2},{"c":"101","s":"CH","t":"HR_101","r":"R101","slot":8,"len":1,"ph":2},{"c":"101","s":"CH","t":"HR_101","r":"R101","slot":9,"len":1,"ph":2},{"c":"101","s":"MA","t":"HR_101","r":"R101","slot":10,"len":1,"ph":2},{"c":"101","s":"LI","t":"HR_101","r":"R101","slot":11,"len":2,"ph":2},{"c":"101","s":"LI","t":"HR_101","r":"R101","slot":14,"len":1,"ph":2},{"c":"101","s":"CH","t":"HR_101","r":"R101","slot":15,"len":1,"ph":2},{"c":"101","s":"MA","t":"HR_101","r":"R101","slot":16,"len":1,"ph":2},{"c":"101","s":"CH","t":"HR_101","r":"R101","slot":17,"len":1,"ph":2},{"c":"101","s":"MA","t":"HR_101","r":"R101","slot":21,"len":1,"ph":2},{"c":"101","s":"CH","t":"HR_101","r":"R101","slot":22,"len":1,"ph":2},{"c":"101","s":"CH","t":"HR_101","r":"R101","slot":23,"len":1,"ph":2},{"c":"101","s":"IN","t":"HR_101","r":"R101","slot":25,"len":2,"ph":2},{"c":"102","s":"LI","t":"HR_102","r":"R102","slot":0,"len":1,"ph":2},{"c":"102","s":"MA","t":"HR_102","r":"R102","slot":1,"len":1,"ph":2},{"c":"102","s":"CH","t":"HR_102","r":"R102","slot":3,"len":1,"ph":2},{"c":"102","s":"LI","t":"HR_102","r":"R102","slot":4,"len":2,"ph":2},{"c":"102","s":"HE","t":"HR_102","r":"R102","slot":7,"len":1,"ph":2},{"c":"102","s":"CH","t":"HR_102","r":"R102","slot":8,"len":1,"ph":2},{"c":"102","s":"LI","t":"HR_102","r":"R102","slot":11,"len":1,"ph":2},{"c":"102","s":"CH","t":"HR_102","r":"R102","slot":15,"len":1,"ph":2},{"c":"102","s":"CH","t":"HR_102","r":"R102","slot":16,"len":1,"ph":2},{"c":"102","s":"MA","t":"HR_102","r":"R102","slot":17,"len":1,"ph":2},{"c":"102","s":"MA","t":"HR_102","r":"R102","slot":21,"len":1,"ph":2},{"c":"102","s":"CH","t":"HR_102","r":"R102","slot":23,"len":1,"ph":2},{"c":"102","s":"CH","t":"HR_102","r":"R102","slot":24,"len":1,"ph":2},{"c":"102","s":"CH","t":"HR_102","r":"R102","slot":28,"len":1,"ph":2},{"c":"102","s":"CH","t":"HR_102","r":"R102","slot":29,"len":1,"ph":2},{"c":"102","s":"MA","t":"HR_102","r":"R102","slot":31,"len":1,"ph":2},{"c":"102","s":"IN","t":"HR_102","r":"R102","slot":32,"len":2,"ph":2},{"c":"201","s":"MA","t":"HR_201","r":"R201","slot":0,"len":1,"ph":2},{"c":"201","s":"CH","t":"HR_201","r":"R201","slot":2,"len":1,"ph":2},{"c":"201","s":"CH","t":"HR_201","r":"R201","slot":7,"len":1,"ph":2},{"c":"201","s":"MA","t":"HR_201","r":"R201","slot":8,"len":1,"ph":2},{"c":"201","s":"HE","t":"HR_201","r":"R201","slot":9,"len":1,"ph":2},{"c":"201","s":"CH","t":"HR_201","r":"R201","slot":10,"len":1,"ph":2},{"c":"201","s":"IN","t":"HR_201","r":"R201","slot":11,"len":2,"ph":2},{"c":"201","s":"LI","t":"HR_201","r":"R201","slot":14,"len":2,"ph":2},{"c":"201","s":"CH","t":"HR_201","r":"R201","slot":16,"len":1,"ph":2},{"c":"201","s":"CH","t":"HR_201","r":"R201","slot":22,"len":1,"ph":2},{"c":"201","s":"CH","t":"HR_201","r":"R201","slot":23,"len":1,"ph":2},{"c":"201","s":"MA","t":"HR_201","r":"R201","slot":24,"len":1,"ph":2},{"c":"201","s":"LI","t":"HR_201","r":"R201","slot":25,"len":1,"ph":2},{"c":"201","s":"LI","t":"HR_201","r":"R201","slot":26,"len":1,"ph":2},{"c":"201","s":"CH","t":"HR_201","r":"R201","slot":28,"len":1,"ph":2},{"c":"201","s":"CH","t":"HR_201","r":"R201","slot":30,"len":1,"ph":2},{"c":"201","s":"MA","t":"HR_201","r":"R201","slot":31,"len":1,"ph":2},{"c":"202","s":"MA","t":"HR_202","r":"R202","slot":0,"len":1,"ph":2},{"c":"202","s":"CH","t":"HR_202","r":"R202","slot":1,"len":1,"ph":2},{"c":"202","s":"CH","t":"HR_202","r":"R202","slot":2,"len":1,"ph":2},{"c":"202","s":"LI","t":"HR_202","r":"R202","slot":3,"len":1,"ph":2},{"c":"202","s":"LI","t":"HR_202","r":"R202","slot":4,"len":1,"ph":2},{"c":"202","s":"LI","t":"HR_202","r":"R202","slot":7,"len":2,"ph":2},{"c":"202","s":"MA","t":"HR_202","r":"R202","slot":9,"len":1,"ph":2},{"c":"202","s":"MA","t":"HR_202","r":"R202","slot":15,"len":1,"ph":2},{"c":"202","s":"CH","t":"HR_202","r":"R202","slot":16,"len":1,"ph":2},{"c":"202","s":"CH","t":"HR_202","r":"R202","slot":17,"len":1,"ph":2},{"c":"202","s":"MA","t":"HR_202","r":"R202","slot":21,"len":1,"ph":2},{"c":"202","s":"CH","t":"HR_202","r":"R202","slot":22,"len":1,"ph":2},{"c":"202","s":"CH","t":"HR_202","r":"R202","slot":23,"len":1,"ph":2},{"c":"202","s":"HE","t":"HR_202","r":"R202","slot":28,"len":1,"ph":2},{"c":"202","s":"CH","t":"HR_202","r":"R202","slot":30,"len":1,"ph":2},{"c":"202","s":"CH","t":"HR_202","r":"R202","slot":31,"len":1,"ph":2},{"c":"202","s":"IN","t":"HR_202","r":"R202","slot":32,"len":2,"ph":2},{"c":"301","s":"CH","t":"HR_301","r":"R301","slot":0,"len":1,"ph":2},{"c":"301","s":"IN","t":"HR_301","r":"R301","slot":2,"len":1,"ph":2},{"c":"301","s":"CH","t":"HR_301","r":"R301","slot":3,"len":1,"ph":2},{"c":"301","s":"HE","t":"HR_301","r":"R301","slot":4,"len":1,"ph":2},{"c":"301","s":"MA","t":"HR_301","r":"R301","slot":7,"len":1,"ph":2},{"c":"301","s":"IN","t":"HR_301","r":"R301","slot":9,"len":2,"ph":2},{"c":"301","s":"SO","t":"HR_301","r":"R301","slot":11,"len":1,"ph":2},{"c":"301","s":"SO","t":"HR_301","r":"R301","slot":12,"len":1,"ph":2},{"c":"301","s":"SO","t":"HR_301","r":"R301","slot":14,"len":1,"ph":2},{"c":"301","s":"MA","t":"HR_301","r":"R301","slot":15,"len":1,"ph":2},{"c":"301","s":"CH","t":"HR_301","r":"R301","slot":16,"len":1,"ph":2},{"c":"301","s":"CH","t":"HR_301","r":"R301","slot":17,"len":1,"ph":2},{"c":"301","s":"MA","t":"HR_301","r":"R301","slot":21,"len":1,"ph":2},{"c":"301","s":"CH","t":"HR_301","r":"R301","slot":23,"len":1,"ph":2},{"c":"301","s":"FX","t":"HR_301","r":"R301","slot":24,"len":1,"ph":2},{"c":"301","s":"FX","t":"HR_301","r":"R301","slot":26,"len":1,"ph":2},{"c":"301","s":"CH","t":"HR_301","r":"R301","slot":28,"len":1,"ph":2},{"c":"301","s":"MA","t":"HR_301","r":"R301","slot":30,"len":1,"ph":2},{"c":"301","s":"FX","t":"HR_301","r":"R301","slot":33,"len":1,"ph":2},{"c":"302","s":"FX","t":"HR_302","r":"R302","slot":0,"len":1,"ph":2},{"c":"302","s":"CH","t":"HR_302","r":"R302","slot":3,"len":1,"ph":2},{"c":"302","s":"IN","t":"HR_302","r":"R302","slot":5,"len":2,"ph":2},{"c":"302","s":"CH","t":"HR_302","r":"R302","slot":7,"len":1,"ph":2},{"c":"302","s":"FX","t":"HR_302","r":"R302","slot":9,"len":1,"ph":2},{"c":"302","s":"MA","t":"HR_302","r":"R302","slot":10,"len":1,"ph":2},{"c":"302","s":"SO","t":"HR_302","r":"R302","slot":14,"len":1,"ph":2},{"c":"302","s":"MA","t":"HR_302","r":"R302","slot":16,"len":1,"ph":2},{"c":"302","s":"CH","t":"HR_302","r":"R302","slot":17,"len":1,"ph":2},{"c":"302","s":"CH","t":"HR_302","r":"R302","slot":21,"len":1,"ph":2},{"c":"302","s":"CH","t":"HR_302","r":"R302","slot":22,"len":1,"ph":2},{"c":"302","s":"FX","t":"HR_302","r":"R302","slot":23,"len":1,"ph":2},{"c":"302","s":"MA","t":"HR_302","r":"R302","slot":24,"len":1,"ph":2},{"c":"302","s":"SO","t":"HR_302","r":"R302","slot":25,"len":1,"ph":2},{"c":"302","s":"SO","t":"HR_302","r":"R302","slot":28,"len":1,"ph":2},{"c":"302","s":"HE","t":"HR_302","r":"R302","slot":29,"len":1,"ph":2},{"c":"302","s":"CH","t":"HR_302","r":"R302","slot":30,"len":1,"ph":2},{"c":"302","s":"MA","t":"HR_302","r":"R302","slot":31,"len":1,"ph":2},{"c":"302","s":"IN","t":"HR_302","r":"R302","slot":34,"len":1,"ph":2},{"c":"401","s":"MA","t":"HR_401","r":"R401","slot":0,"len":1,"ph":2},{"c":"401","s":"SO","t":"HR_401","r":"R401","slot":1,"len":1,"ph":2},{"c":"401","s":"CH","t":"HR_401","r":"R401","slot":2,"len":1,"ph":2},{"c":"401","s":"HE","t":"HR_401","r":"R401","slot":3,"len":1,"ph":2},{"c":"401","s":"IN","t":"HR_401","r":"R401","slot":4,"len":1,"ph":2},{"c":"401","s":"IN","t":"HR_401","r":"R401","slot":7,"len":2,"ph":2},{"c":"401","s":"SO","t":"HR_401","r":"R401","slot":10,"len":1,"ph":2},{"c":"401","s":"SO","t":"HR_401","r":"R401","slot":14,"len":1,"ph":2},{"c":"401","s":"MA","t":"HR_401","r":"R401","slot":15,"len":1,"ph":2},{"c":"401","s":"CH","t":"HR_401","r":"R401","slot":16,"len":1,"ph":2},{"c":"401","s":"MA","t":"HR_401","r":"R401","slot":21,"len":1,"ph":2},{"c":"401","s":"FX","t":"HR_401","r":"R401","slot":22,"len":1,"ph":2},{"c":"401","s":"CH","t":"HR_401","r":"R401","slot":23,"len":1,"ph":2},{"c":"401","s":"CH","t":"HR_401","r":"R401","slot":24,"len":1,"ph":2},{"c":"401","s":"FX","t":"HR_401","r":"R401","slot":25,"len":1,"ph":2},{"c":"401","s":"MA","t":"HR_401","r":"R401","slot":28,"len":1,"ph":2},{"c":"401","s":"CH","t":"HR_401","r":"R401","slot":29,"len":1,"ph":2},{"c":"401","s":"CH","t":"HR_401","r":"R401","slot":31,"len":1,"ph":2},{"c":"401","s":"FX","t":"HR_401","r":"R401","slot":32,"len":1,"ph":2},{"c":"402","s":"FX","t":"HR_402","r":"R402","slot":0,"len":1,"ph":2},{"c":"402","s":"FX","t":"HR_402","r":"R402","slot":1,"len":1,"ph":2},{"c":"402","s":"MA","t":"HR_402","r":"R402","slot":3,"len":1,"ph":2},{"c":"402","s":"HE","t":"HR_402","r":"R402","slot":4,"len":1,"ph":2},{"c":"402","s":"IN","t":"HR_402","r":"R402","slot":5,"len":1,"ph":2},{"c":"402","s":"SO","t":"HR_402","r":"R402","slot":6,"len":1,"ph":2},{"c":"402","s":"IN","t":"HR_402","r":"R402","slot":7,"len":2,"ph":2},{"c":"402","s":"MA","t":"HR_402","r":"R402","slot":9,"len":1,"ph":2},{"c":"402","s":"CH","t":"HR_402","r":"R402","slot":10,"len":1,"ph":2},{"c":"402","s":"SO","t":"HR_402","r":"R402","slot":14,"len":1,"ph":2},{"c":"402","s":"CH","t":"HR_402","r":"R402","slot":16,"len":1,"ph":2},{"c":"402","s":"MA","t":"HR_402","r":"R402","slot":17,"len":1,"ph":2},{"c":"402","s":"CH","t":"HR_402","r":"R402","slot":21,"len":1,"ph":2},{"c":"402","s":"SO","t":"HR_402","r":"R402","slot":22,"len":1,"ph":2},{"c":"402","s":"CH","t":"HR_402","r":"R402","slot":23,"len":1,"ph":2},{"c":"402","s":"FX","t":"HR_402","r":"R402","slot":25,"len":1,"ph":2},{"c":"402","s":"MA","t":"HR_402","r":"R402","slot":28,"len":1,"ph":2},{"c":"402","s":"CH","t":"HR_402","r":"R402","slot":30,"len":1,"ph":2},{"c":"402","s":"CH","t":"HR_402","r":"R402","slot":31,"len":1,"ph":2},{"c":"501","s":"CH","t":"HR_501","r":"R501","slot":1,"len":1,"ph":2},{"c":"501","s":"MA","t":"HR_501","r":"R501","slot":2,"len":1,"ph":2},{"c":"501","s":"CH","t":"HR_501","r":"R501","slot":3,"len":1,"ph":2},{"c":"501","s":"FX","t":"HR_501","r":"R501","slot":5,"len":1,"ph":2},{"c":"501","s":"FX","t":"HR_501","r":"R501","slot":6,"len":1,"ph":2},{"c":"501","s":"SO","t":"HR_501","r":"R501","slot":7,"len":1,"ph":2},{"c":"501","s":"IN","t":"HR_501","r":"R501","slot":8,"len":1,"ph":2},{"c":"501","s":"CH","t":"HR_501","r":"R501","slot":9,"len":1,"ph":2},{"c":"501","s":"FX","t":"HR_501","r":"R501","slot":11,"len":1,"ph":2},{"c":"501","s":"MA","t":"HR_501","r":"R501","slot":14,"len":1,"ph":2},{"c":"501","s":"SO","t":"HR_501","r":"R501","slot":15,"len":1,"ph":2},{"c":"501","s":"FX","t":"HR_501","r":"R501","slot":18,"len":1,"ph":2},{"c":"501","s":"MA","t":"HR_501","r":"R501","slot":22,"len":1,"ph":2},{"c":"501","s":"CH","t":"HR_501","r":"R501","slot":23,"len":1,"ph":2},{"c":"501","s":"CH","t":"HR_501","r":"R501","slot":24,"len":1,"ph":2},{"c":"501","s":"SO","t":"HR_501","r":"R501","slot":26,"len":1,"ph":2},{"c":"501","s":"IN","t":"HR_501","r":"R501","slot":28,"len":2,"ph":2},{"c":"501","s":"MA","t":"HR_501","r":"R501","slot":30,"len":1,"ph":2},{"c":"501","s":"CH","t":"HR_501","r":"R501","slot":31,"len":1,"ph":2},{"c":"501","s":"FX","t":"HR_501","r":"R501","slot":32,"len":1,"ph":2},{"c":"501","s":"HE","t":"HR_501","r":"R501","slot":33,"len":1,"ph":2},{"c":"502","s":"MA","t":"HR_502","r":"R502","slot":0,"len":1,"ph":2},{"c":"502","s":"HE","t":"HR_502","r":"R502","slot":1,"len":1,"ph":2},{"c":"502","s":"CH","t":"HR_502","r":"R502","slot":2,"len":1,"ph":2},{"c":"502","s":"CH","t":"HR_502","r":"R502","slot":3,"len":1,"ph":2},{"c":"502","s":"FX","t":"HR_502","r":"R502","slot":4,"len":1,"ph":2},{"c":"502","s":"FX","t":"HR_502","r":"R502","slot":7,"len":1,"ph":2},{"c":"502","s":"CH","t":"HR_502","r":"R502","slot":9,"len":1,"ph":2},{"c":"502","s":"FX","t":"HR_502","r":"R502","slot":11,"len":1,"ph":2},{"c":"502","s":"FX","t":"HR_502","r":"R502","slot":13,"len":1,"ph":2},{"c":"502","s":"MA","t":"HR_502","r":"R502","slot":14,"len":1,"ph":2},{"c":"502","s":"IN","t":"HR_502","r":"R502","slot":16,"len":2,"ph":2},{"c":"502","s":"MA","t":"HR_502","r":"R502","slot":22,"len":1,"ph":2},{"c":"502","s":"SO","t":"HR_502","r":"R502","slot":23,"len":1,"ph":2},{"c":"502","s":"CH","t":"HR_502","r":"R502","slot":24,"len":1,"ph":2},{"c":"502","s":"FX","t":"HR_502","r":"R502","slot":25,"len":1,"ph":2},{"c":"502","s":"SO","t":"HR_502","r":"R502","slot":28,"len":1,"ph":2},{"c":"502","s":"CH","t":"HR_502","r":"R502","slot":29,"len":1,"ph":2},{"c":"502","s":"MA","t":"HR_502","r":"R502","slot":30,"len":1,"ph":2},{"c":"502","s":"CH","t":"HR_502","r":"R502","slot":31,"len":1,"ph":2},{"c":"502","s":"SO","t":"HR_502","r":"R502","slot":32,"len":1,"ph":2},{"c":"502","s":"IN","t":"HR_502","r":"R502","slot":33,"len":1,"ph":2},{"c":"601","s":"CH","t":"HR_601","r":"R601","slot":0,"len":1,"ph":2},{"c":"601","s":"IN","t":"HR_601","r":"R601","slot":1,"len":1,"ph":2},{"c":"601","s":"FX","t":"HR_601","r":"R601","slot":2,"len":1,"ph":2},{"c":"601","s":"CH","t":"HR_601","r":"R601","slot":3,"len":1,"ph":2},{"c":"601","s":"MA","t":"HR_601","r":"R601","slot":8,"len":1,"ph":2},{"c":"601","s":"IN","t":"HR_601","r":"R601","slot":9,"len":2,"ph":2},{"c":"601","s":"FX","t":"HR_601","r":"R601","slot":11,"len":1,"ph":2},{"c":"601","s":"FX","t":"HR_601","r":"R601","slot":12,"len":1,"ph":2},{"c":"601","s":"SO","t":"HR_601","r":"R601","slot":15,"len":1,"ph":2},{"c":"601","s":"SO","t":"HR_601","r":"R601","slot":16,"len":1,"ph":2},{"c":"601","s":"MA","t":"HR_601","r":"R601","slot":17,"len":1,"ph":2},{"c":"601","s":"MA","t":"HR_601","r":"R601","slot":21,"len":1,"ph":2},{"c":"601","s":"CH","t":"HR_601","r":"R601","slot":22,"len":1,"ph":2},{"c":"601","s":"CH","t":"HR_601","r":"R601","slot":23,"len":1,"ph":2},{"c":"601","s":"SO","t":"HR_601","r":"R601","slot":24,"len":1,"ph":2},{"c":"601","s":"FX","t":"HR_601","r":"R601","slot":28,"len":1,"ph":2},{"c":"601","s":"CH","t":"HR_601","r":"R601","slot":29,"len":1,"ph":2},{"c":"601","s":"CH","t":"HR_601","r":"R601","slot":30,"len":1,"ph":2},{"c":"601","s":"MA","t":"HR_601","r":"R601","slot":31,"len":1,"ph":2},{"c":"601","s":"FX","t":"HR_601","r":"R601","slot":33,"len":1,"ph":2},{"c":"601","s":"HE","t":"HR_601","r":"R601","slot":34,"len":1,"ph":2},{"c":"602","s":"FX","t":"HR_602","r":"R602","slot":0,"len":1,"ph":2},{"c":"602","s":"IN","t":"HR_602","r":"R602","slot":1,"len":1,"ph":2},{"c":"602","s":"CH","t":"HR_602","r":"R602","slot":2,"len":1,"ph":2},{"c":"602","s":"FX","t":"HR_602","r":"R602","slot":4,"len":1,"ph":2},{"c":"602","s":"FX","t":"HR_602","r":"R602","slot":7,"len":1,"ph":2},{"c":"602","s":"MA","t":"HR_602","r":"R602","slot":8,"len":1,"ph":2},{"c":"602","s":"CH","t":"HR_602","r":"R602","slot":9,"len":1,"ph":2},{"c":"602","s":"HE","t":"HR_602","r":"R602","slot":11,"len":1,"ph":2},{"c":"602","s":"FX","t":"HR_602","r":"R602","slot":12,"len":1,"ph":2},{"c":"602","s":"SO","t":"HR_602","r":"R602","slot":13,"len":1,"ph":2},{"c":"602","s":"IN","t":"HR_602","r":"R602","slot":14,"len":2,"ph":2},{"c":"602","s":"MA","t":"HR_602","r":"R602","slot":16,"len":1,"ph":2},{"c":"602","s":"SO","t":"HR_602","r":"R602","slot":17,"len":1,"ph":2},{"c":"602","s":"MA","t":"HR_602","r":"R602","slot":21,"len":1,"ph":2},{"c":"602","s":"CH","t":"HR_602","r":"R602","slot":22,"len":1,"ph":2},{"c":"602","s":"CH","t":"HR_602","r":"R602","slot":24,"len":1,"ph":2},{"c":"602","s":"MA","t":"HR_602","r":"R602","slot":28,"len":1,"ph":2},{"c":"602","s":"CH","t":"HR_602","r":"R602","slot":30,"len":1,"ph":2},{"c":"602","s":"CH","t":"HR_602","r":"R602","slot":31,"len":1,"ph":2},{"c":"602","s":"SO","t":"HR_602","r":"R602","slot":32,"len":1,"ph":2},{"c":"602","s":"FX","t":"HR_602","r":"R602","slot":33,"len":1,"ph":2}],"handoff":{"good":{"101":{"free":23,"need":19,"morning_free":17,"core_need":12,"core_fits_morning":true,"per_day":[6,6,4,6,1],"day_spread":5,"double_slots":15,"cap":6,"usable":23,"over":[false,false,false,false,false]},"102":{"free":23,"need":19,"morning_free":16,"core_need":12,"core_fits_morning":true,"per_day":[5,4,4,4,6],"day_spread":2,"double_slots":12,"cap":6,"usable":23,"over":[false,false,false,false,false]},"201":{"free":23,"need":19,"morning_free":17,"core_need":12,"core_fits_morning":true,"per_day":[3,6,3,6,5],"day_spread":3,"double_slots":13,"cap":6,"usable":23,"over":[false,false,false,false,false]},"202":{"free":23,"need":19,"morning_free":18,"core_need":12,"core_fits_morning":true,"per_day":[5,5,3,5,5],"day_spread":2,"double_slots":13,"cap":6,"usable":23,"over":[false,false,false,false,false]},"301":{"free":22,"need":20,"morning_free":16,"core_need":10,"core_fits_morning":true,"per_day":[4,5,4,4,5],"day_spread":1,"double_slots":10,"cap":6,"usable":22,"over":[false,false,false,false,false]},"302":{"free":22,"need":20,"morning_free":16,"core_need":10,"core_fits_morning":true,"per_day":[4,4,3,6,5],"day_spread":3,"double_slots":9,"cap":6,"usable":22,"over":[false,false,false,false,false]},"401":{"free":22,"need":20,"morning_free":17,"core_need":10,"core_fits_morning":true,"per_day":[5,4,3,5,5],"day_spread":2,"double_slots":11,"cap":6,"usable":22,"over":[false,false,false,false,false]},"402":{"free":22,"need":20,"morning_free":16,"core_need":10,"core_fits_morning":true,"per_day":[6,4,3,5,4],"day_spread":3,"double_slots":10,"cap":6,"usable":22,"over":[false,false,false,false,false]},"501":{"free":23,"need":22,"morning_free":16,"core_need":10,"core_fits_morning":true,"per_day":[5,5,3,4,6],"day_spread":3,"double_slots":13,"cap":6,"usable":23,"over":[false,false,false,false,false]},"502":{"free":23,"need":22,"morning_free":16,"core_need":10,"core_fits_morning":true,"per_day":[5,4,3,5,6],"day_spread":3,"double_slots":10,"cap":6,"usable":23,"over":[false,false,false,false,false]},"601":{"free":23,"need":22,"morning_free":18,"core_need":10,"core_fits_morning":true,"per_day":[4,5,3,5,6],"day_spread":3,"double_slots":15,"cap":6,"usable":23,"over":[false,false,false,false,false]},"602":{"free":23,"need":22,"morning_free":16,"core_need":10,"core_fits_morning":true,"per_day":[4,6,4,4,5],"day_spread":2,"double_slots":12,"cap":6,"usable":23,"over":[false,false,false,false,false]}},"bad":{"101":{"free":23,"need":19,"morning_free":15,"core_need":12,"core_fits_morning":true,"per_day":[5,6,4,3,5],"day_spread":3,"double_slots":13,"cap":6,"usable":23,"over":[false,false,false,false,false]},"102":{"free":23,"need":19,"morning_free":16,"core_need":12,"core_fits_morning":true,"per_day":[5,5,3,6,4],"day_spread":3,"double_slots":12,"cap":6,"usable":23,"over":[false,false,false,false,false]},"201":{"free":23,"need":19,"morning_free":15,"core_need":12,"core_fits_morning":true,"per_day":[5,5,4,4,5],"day_spread":1,"double_slots":11,"cap":6,"usable":23,"over":[false,false,false,false,false]},"202":{"free":23,"need":19,"morning_free":17,"core_need":12,"core_fits_morning":true,"per_day":[4,4,4,6,5],"day_spread":2,"double_slots":13,"cap":6,"usable":23,"over":[false,false,false,false,false]},"301":{"free":22,"need":20,"morning_free":14,"core_need":10,"core_fits_morning":true,"per_day":[3,5,4,5,5],"day_spread":2,"double_slots":12,"cap":6,"usable":22,"over":[false,false,false,false,false]},"302":{"free":22,"need":20,"morning_free":13,"core_need":10,"core_fits_morning":true,"per_day":[6,3,2,4,7],"day_spread":5,"double_slots":10,"cap":6,"usable":21,"over":[false,false,false,false,true]},"401":{"free":22,"need":20,"morning_free":12,"core_need":10,"core_fits_morning":true,"per_day":[1,6,1,7,7],"day_spread":6,"double_slots":14,"cap":6,"usable":20,"over":[false,false,false,true,true]},"402":{"free":22,"need":20,"morning_free":13,"core_need":10,"core_fits_morning":true,"per_day":[4,5,0,6,7],"day_spread":7,"double_slots":12,"cap":6,"usable":21,"over":[false,false,false,false,true]},"501":{"free":23,"need":22,"morning_free":12,"core_need":10,"core_fits_morning":true,"per_day":[5,4,5,5,4],"day_spread":1,"double_slots":9,"cap":6,"usable":23,"over":[false,false,false,false,false]},"502":{"free":23,"need":22,"morning_free":12,"core_need":10,"core_fits_morning":true,"per_day":[1,3,5,7,7],"day_spread":6,"double_slots":15,"cap":6,"usable":21,"over":[false,false,false,true,true]},"601":{"free":23,"need":22,"morning_free":17,"core_need":10,"core_fits_morning":true,"per_day":[2,5,5,6,5],"day_spread":4,"double_slots":12,"cap":6,"usable":23,"over":[false,false,false,false,false]},"602":{"free":23,"need":22,"morning_free":15,"core_need":10,"core_fits_morning":true,"per_day":[5,6,4,5,3],"day_spread":3,"double_slots":11,"cap":6,"usable":23,"over":[false,false,false,false,false]}}},"solve":{"p1":{"status":"OPTIMAL","time":0.77,"penalty":188,"violations":["101 導師 希望週五不排課（1 年 1 班該日尚未被科任填滿的格數）（成本 150）","1 年 1 班 每天科任課不超過 3 節（成本 30）","體育避開第 [5] 節（成本 8）"]},"p2":{"101":{"status":"OPTIMAL","penalty":0,"time":0.033,"violations":[]},"102":{"status":"OPTIMAL","penalty":0,"time":0.03,"violations":[]},"201":{"status":"OPTIMAL","penalty":0,"time":0.029,"violations":[]},"202":{"status":"OPTIMAL","penalty":0,"time":0.027,"violations":[]},"301":{"status":"OPTIMAL","penalty":0,"time":0.026,"violations":[]},"302":{"status":"OPTIMAL","penalty":0,"time":0.03,"violations":[]},"401":{"status":"OPTIMAL","penalty":0,"time":0.027,"violations":[]},"402":{"status":"OPTIMAL","penalty":0,"time":0.028,"violations":[]},"501":{"status":"OPTIMAL","penalty":0,"time":0.031,"violations":[]},"502":{"status":"OPTIMAL","penalty":0,"time":0.031,"violations":[]},"601":{"status":"OPTIMAL","penalty":0,"time":0.032,"violations":[]},"602":{"status":"OPTIMAL","penalty":0,"time":0.031,"violations":[]}},"badFailed":["502"]},"feasibility":[]}</script>
 <script>
-const D = JSON.parse(document.getElementById('data').textContent);
+const D_SEED = JSON.parse(document.getElementById('data').textContent);
+const STORE = 'scheduling.school.v2';
+
+// 整份學校資料存成一份。先前只存老師，其他設定一重新整理就沒了。
+function loadAll(){
+  try{
+    const raw = localStorage.getItem(STORE);
+    if(raw){
+      const j = JSON.parse(raw);
+      if(j && j.grid && j.classes && j.placements) return j;
+    }
+  }catch(e){}
+  return JSON.parse(JSON.stringify(D_SEED));
+}
+let saveTimer = null;
+function saveAll(){
+  // 編輯時會連續觸發，合併成一次寫入
+  if(saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(()=>{
+    saveTimer = null;
+    try{ localStorage.setItem(STORE, JSON.stringify(D)); }
+    catch(e){ console.warn('存不進瀏覽器儲存空間', e); }
+  }, 250);
+}
+function resetAll(){
+  try{ localStorage.removeItem(STORE); }catch(e){}
+  location.reload();
+}
+const D = loadAll();
 const G = D.grid, DAYS = ['一','二','三','四','五'];
 const slotOf = (d,p)=>(d-1)*G.periods+(p-1);
 const dayOf = s=>Math.floor(s/G.periods)+1, perOf = s=>s%G.periods+1;
@@ -706,7 +769,7 @@ function renderPhase2(){
       if(it && it.idx!=null){ p2Sel = (p2Sel===it.idx ? null : it.idx); renderPhase2(); return; }
       if(p2Sel!=null && !it){
         const m = checkMove(p2Class, p2Sel, s);
-        if(m.ok){ hrLessons(p2Class)[p2Sel].slot = s; p2Sel=null; renderPhase2(); }
+        if(m.ok){ hrLessons(p2Class)[p2Sel].slot = s; saveAll(); p2Sel=null; renderPhase2(); }
         else { flash(m.why); }
       }
     }
@@ -785,7 +848,7 @@ function applySnap(sn){ sn.forEach((o,i)=>{ D.placements[i].slot=o.slot; D.place
 function applyPlan(plan){
   undoStack.push(snapAll()); if(undoStack.length>20) undoStack.shift();
   plan.moves.forEach(m=>{ D.placements[m.i].slot = m.to.slot; D.placements[m.i].r = m.to.room; });
-  snapshotP2();
+  snapshotP2(); saveAll();
   vSel=null; vPlan=null; vStat=null;
   refreshStats(); renderView();
 }
@@ -816,7 +879,7 @@ function renderView(){
   sel.onchange=()=>{ vKey=sel.value; vSel=null; vPlan=null; vStat=null; renderView(); };
   bar.appendChild(seg); bar.appendChild(sel);
   const undo = el('button','btn','復原'); undo.disabled = !undoStack.length;
-  undo.onclick=()=>{ const sn=undoStack.pop(); if(sn){ applySnap(sn); snapshotP2();
+  undo.onclick=()=>{ const sn=undoStack.pop(); if(sn){ applySnap(sn); snapshotP2(); saveAll();
     vSel=null; vPlan=null; vStat=null; refreshStats(); renderView(); } };
   bar.appendChild(undo);
   if(vSel!=null){
@@ -824,6 +887,14 @@ function renderView(){
     cancel.onclick=()=>{ vSel=null; vPlan=null; vStat=null; renderView(); };
     bar.appendChild(cancel);
   }
+  const spacer = el('div'); spacer.style.flex='1'; bar.appendChild(spacer);
+  const pr = el('button','btn','列印全部課表');
+  pr.onclick=()=>{ buildPrintArea(); setTimeout(()=>window.print(), 60); };
+  const cs = el('button','btn','下載 CSV');
+  cs.onclick=()=>downloadText(timetableCSV(),'timetable.csv','text/csv;charset=utf-8');
+  const cc = el('button','btn','複製 CSV');
+  cc.onclick=()=>copyText(timetableCSV(), cc, '複製 CSV');
+  bar.appendChild(pr); bar.appendChild(cs); bar.appendChild(cc);
   p.appendChild(bar);
 
   const mine = D.placements.filter(x => vMode==='class' ? x.c===vKey
@@ -986,16 +1057,16 @@ const CK = {
   TEACHER_MAX_RUN:      {label:'最多連續幾節',     fields:['max'],           w:20},
   TEACHER_COMPACT:      {label:'課表不要有空堂',   fields:[],                w:5},
 };
-const LS_KEY = 'scheduling.teachers.v1';
 
 let TS = null, tSel = null;
 
+// TS 是編輯老師時用的檢視，真相永遠在 D 裡
 function loadTS(){
-  try{ const raw = localStorage.getItem(LS_KEY); if(raw) return JSON.parse(raw); }catch(e){}
   return {
-    teachers: D.loads.map(l=>({
-      id:l.id, name:l.name, role:l.role, max:l.max, cap:l.cap,
-      subjects:l.subjects.slice(), classes:l.classes.slice(),
+    teachers: Object.entries(D.teachers).map(([id,t])=>({
+      id, name:t.name, role:t.role, max:t.max, cap:t.cap,
+      subjects: (t.subjects || [...new Set(D.requirements.filter(r=>r.t===id).map(r=>r.s))]).slice(),
+      classes: [...new Set(D.requirements.filter(r=>r.t===id).map(r=>r.c))],
     })),
     constraints: D.constraints
       .filter(c=>c.params && c.params.teacher)
@@ -1003,8 +1074,8 @@ function loadTS(){
                 hard:c.hard, weight:c.weight})),
   };
 }
-function saveTS(){ syncD(); try{ localStorage.setItem(LS_KEY, JSON.stringify(TS)); }catch(e){} }
-function resetTS(){ try{ localStorage.removeItem(LS_KEY); }catch(e){} TS=loadTS(); tSel=null; renderTeachers(); }
+function saveTS(){ syncD(); saveAll(); }
+function resetTS(){ resetAll(); }
 
 /* 配課節數取自實際配課（requirements），上限則來自這裡的設定 */
 function assignedPeriods(tid){
@@ -1065,22 +1136,10 @@ function renderTeachers(){
   const sf = el('div','card-b'); sf.style.borderTop='1px solid var(--line)';
   const bar = el('div'); bar.style.cssText='display:flex;gap:7px;flex-wrap:wrap';
   const exp = el('button','btn','下載 JSON');
-  exp.onclick=exportTeachers;
+  exp.onclick=()=>downloadText(teachersJSON(),'teachers.json','application/json');
   // 下載在某些嵌入式檢視器裡會被沙箱擋掉，所以一定要有複製這條路
   const cpy = el('button','btn','複製 JSON');
-  cpy.onclick=async()=>{
-    const txt = teachersJSON();
-    try{
-      await navigator.clipboard.writeText(txt);
-      cpy.textContent='已複製 ✓';
-      setTimeout(()=>{ cpy.textContent='複製 JSON'; }, 1800);
-    }catch(e){
-      const ta = el('textarea'); ta.className='in'; ta.rows=10; ta.value=txt;
-      ta.readOnly=true; ta.style.marginTop='10px';
-      const old = sf.querySelector('textarea'); if(old) old.remove();
-      sf.appendChild(ta); ta.select();
-    }
-  };
+  cpy.onclick=()=>copyText(teachersJSON(), cpy, '複製 JSON');
   const imp = el('button','btn','匯入 JSON');
   const file = el('input'); file.type='file'; file.accept='.json'; file.style.display='none';
   file.onchange=e=>{ const f=e.target.files[0]; if(!f) return;
@@ -1293,18 +1352,12 @@ function teachersJSON(){
   return JSON.stringify(out, null, 2);
 }
 
-function exportTeachers(){
-  const blob = new Blob([teachersJSON()], {type:'application/json'});
-  const a = el('a'); a.href=URL.createObjectURL(blob);
-  a.download='teachers.json'; document.body.appendChild(a); a.click();
-  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 0);
-}
 
 /* 老師設定的修改要讓後續畫面都看得到，所以同步回共用的資料表 */
 function syncD(){
   TS.teachers.forEach(t=>{
     D.teachers[t.id] = Object.assign(D.teachers[t.id] || {}, 
-      {name:t.name, role:t.role, max:t.max, cap:t.cap});
+      {name:t.name, role:t.role, max:t.max, cap:t.cap, subjects:t.subjects.slice()});
   });
   // 個人需求也要寫回共用資料，否則在畫面上改了需求，排課時根本讀不到。
   // 班級／科目層級的需求（例如「主科排上午」）不歸老師管，原樣保留。
@@ -1917,7 +1970,7 @@ function applySolution(res){
     c:p.c, s:p.s, t:p.t, r:p.r, slot:p.slot, len:p.len,
     ph: D.teachers[p.t].role==='homeroom' ? 2 : 1,
   }));
-  snapshotP2(); p2Sel = null; vSel = null; vPlan = null; undoStack.length = 0;
+  snapshotP2(); p2Sel = null; vSel = null; vPlan = null; undoStack.length = 0; saveAll();
 
   D.handoff.good = handoffReport(D, D.placements.filter(x=>x.ph===1));
   D.handoff.bad = D.handoff.good; D.handoff.stale = true;   // 對照組需另外求解
@@ -2056,7 +2109,7 @@ function assignEditor(){
     btn.onclick=()=>{
       const t = TROWS().find(x=>x.subjects.includes(sid)) || TROWS()[0];
       D.requirements.push({c:cid, s:sid, n:1, t:t.id, d:0});
-      renderAssign();
+      saveAll(); renderAssign();
     };
     box.appendChild(el('div','note info','這個班目前沒有這一科。'));
     box.lastChild.style.margin='12px 0';
@@ -2076,25 +2129,25 @@ function assignEditor(){
   tsel.onchange=()=>{
     r.t = tsel.value;
     const t = TS.teachers.find(x=>x.id===r.t);
-    if(t && !t.subjects.includes(sid)){ t.subjects.push(sid); saveTS(); }
-    renderAssign();
+    if(t && !t.subjects.includes(sid)){ t.subjects.push(sid); }
+    saveTS(); renderAssign();
   };
   grid.appendChild(fld('任課老師', tsel));
 
   const nIn = el('input'); nIn.type='number'; nIn.min='1'; nIn.max='20'; nIn.className='in'; nIn.value=r.n;
-  nIn.oninput=()=>{ r.n=Math.max(1,+nIn.value||1); if(r.d*2>r.n) r.d=Math.floor(r.n/2); renderAssign(); };
+  nIn.oninput=()=>{ r.n=Math.max(1,+nIn.value||1); if(r.d*2>r.n) r.d=Math.floor(r.n/2); saveAll(); renderAssign(); };
   grid.appendChild(fld('每週節數', nIn,
     `${D.classes[cid].name} 目前共 ${classTotal(cid)} 節 / 可用 ${classCapacity(cid)} 節`));
 
   const dIn = el('input'); dIn.type='number'; dIn.min='0'; dIn.max=String(Math.floor(r.n/2));
   dIn.className='in'; dIn.value=r.d||0;
-  dIn.oninput=()=>{ r.d=Math.max(0,Math.min(Math.floor(r.n/2), +dIn.value||0)); renderAssign(); };
+  dIn.oninput=()=>{ r.d=Math.max(0,Math.min(Math.floor(r.n/2), +dIn.value||0)); saveAll(); renderAssign(); };
   grid.appendChild(fld('其中連堂數', dIn, '一個連堂佔兩節，且必須同一天相鄰、不跨午休'));
   box.appendChild(grid);
 
   const del = el('button','btn','移除這一科'); del.type='button'; del.style.marginTop='14px';
   del.onclick=()=>{ if(!confirm(`移除 ${D.classes[cid].name} 的${D.subjects[sid].name}？`)) return;
-    D.requirements.splice(D.requirements.indexOf(r),1); aSel=null; renderAssign(); };
+    D.requirements.splice(D.requirements.indexOf(r),1); saveAll(); aSel=null; renderAssign(); };
   box.appendChild(del);
   box.appendChild(el('div','note warn','配課改動後要按右上角<b>重新排課</b>，課表才會跟著更新。'));
   box.lastChild.style.marginTop='14px';
@@ -2270,8 +2323,482 @@ function whyNot(b, idx, target){
   return `會讓${D.teachers[e.t].name}超過每天 ${D.teachers[e.t].cap} 節的上限`;
 }
 
+/* ============ 步驟 1 基本設定 ============
+   節次格線、班級、教室、科目。這些是所有其他畫面的基礎資料。               */
+
+let setupTab = 'grid', cSel = null, rSel = null, sSel = null;
+
+const ROOM_TYPES = [
+  ['homeroom','原班教室'], ['music','音樂教室'], ['computer','電腦教室'],
+  ['pe','體育場地'], ['art','美勞教室'], ['science','自然教室'], ['other','其他專科'],
+];
+const roomTypeName = t => (ROOM_TYPES.find(x=>x[0]===t)||[t,t])[1];
+
+function renderSetup(){
+  const p = document.getElementById('p-setup'); p.innerHTML='';
+  p.appendChild(el('p','lede','課表能排成什麼樣子，取決於這裡。'
+    +'<strong>一週有幾節、哪幾天下午不上課、有幾間專科教室</strong> —— '
+    +'這些不是偏好，是排課的物理邊界。'));
+
+  const seg = el('div','seg'); seg.style.marginBottom='16px';
+  [['grid','節次格線'],['class','班級'],['room','教室'],['subject','科目'],['data','資料']]
+    .forEach(([k,t])=>{
+      const b=el('button',null,t); b.setAttribute('aria-pressed', k===setupTab);
+      b.onclick=()=>{ setupTab=k; renderSetup(); }; seg.appendChild(b);
+    });
+  p.appendChild(seg);
+  p.appendChild(({grid:gridPane, class:classPane, room:roomPane,
+                  subject:subjectPane, data:dataPane})[setupTab]());
+}
+
+/* ---------- 節次格線 ---------- */
+function gridPane(){
+  const g = D.grid;
+  const card = el('div','card');
+  card.appendChild(el('div','card-h','<h3>一週的時間格線</h3>'));
+  const b = el('div','card-b');
+
+  const warn = el('div','note warn');
+  warn.innerHTML = '改動天數或節數會<b>重新編號所有時段</b>。落在新格線外的課會被移除，'
+    + '之後要按「重新排課」補回來。';
+  b.appendChild(warn);
+
+  const gr = el('div','form-grid'); gr.style.marginTop='16px';
+  const fld=(l,n,h)=>{ const w=el('div','fld'); w.appendChild(el('label','eyebrow',l));
+    w.appendChild(n); if(h) w.appendChild(el('div','hint',h)); return w; };
+
+  const dIn = el('input'); dIn.type='number'; dIn.min='1'; dIn.max='7'; dIn.className='in'; dIn.value=g.days;
+  dIn.onchange=()=>{ changeGrid(Math.min(7,Math.max(1,+dIn.value||5)), g.periods); renderSetup(); };
+  gr.appendChild(fld('一週上課天數', dIn));
+
+  const pIn = el('input'); pIn.type='number'; pIn.min='1'; pIn.max='12'; pIn.className='in'; pIn.value=g.periods;
+  pIn.onchange=()=>{ changeGrid(g.days, Math.min(12,Math.max(1,+pIn.value||7))); renderSetup(); };
+  gr.appendChild(fld('每天節數', pIn, '含下午。哪些班不上第 7 節，到「班級」逐班設定'));
+  b.appendChild(gr);
+
+  const mk=(title, hint, sel, onTog, max)=>{
+    const box=el('div'); box.style.marginTop='18px';
+    box.appendChild(el('div','eyebrow',title));
+    box.appendChild(el('div','hint',hint));
+    const row=el('div','chip-row');
+    for(let i=1;i<=max;i++){
+      const on=sel.includes(i);
+      const btn=el('button','chip-tog'+(on?' on':''),'第'+i+'節'); btn.type='button';
+      btn.onclick=()=>{ onTog(i); saveAll(); renderSetup(); };
+      row.appendChild(btn);
+    }
+    box.appendChild(row); return box;
+  };
+  b.appendChild(mk('上午節次', '用來判斷「主科盡量排上午」這類偏好', g.morning,
+    i=>{ const k=g.morning.indexOf(i); k<0?g.morning.push(i):g.morning.splice(k,1);
+         g.morning.sort((a,c)=>a-c); }, g.periods));
+  b.appendChild(mk('連堂不可跨越的界線', '選第 4 節代表第 4、5 節之間是午休，連堂不能跨過去',
+    g.breaks, i=>{ const k=g.breaks.indexOf(i); k<0?g.breaks.push(i):g.breaks.splice(k,1);
+         g.breaks.sort((a,c)=>a-c); }, g.periods-1));
+  card.appendChild(b); return card;
+}
+
+/* 天數或節數改變時，slot 的編碼跟著變，必須整份重新換算 */
+function changeGrid(nd, np){
+  const g=D.grid, op=g.periods;
+  if(nd===g.days && np===op) return;
+  const dp = s => ({d: Math.floor(s/op)+1, p: s%op+1});
+  const enc = (d,pp) => (d-1)*np + (pp-1);
+  const keep = (d,pp) => d<=nd && pp<=np;
+
+  D.placements = D.placements.filter(x=>{
+    const a=dp(x.slot);
+    if(!keep(a.d,a.p)) return false;
+    if(x.len===2 && !keep(a.d,a.p+1)) return false;
+    x.slot = enc(a.d,a.p); return true;
+  });
+  Object.values(D.classes).forEach(c=>{
+    c.blocked = [...new Set(c.blocked.map(dp).filter(a=>keep(a.d,a.p)).map(a=>enc(a.d,a.p)))];
+  });
+  D.constraints.forEach(c=>{
+    if(c.params.days)    c.params.days    = c.params.days.filter(d=>d<=nd);
+    if(c.params.periods) c.params.periods = c.params.periods.filter(x=>x<=np);
+    if(c.params.day && c.params.day>nd) c.params.day = nd;
+    if(c.params.max && c.params.max>np) c.params.max = np;
+  });
+  g.days=nd; g.periods=np;
+  g.morning = g.morning.filter(x=>x<=np);
+  g.breaks  = g.breaks.filter(x=>x<np);
+  Object.values(D.teachers).forEach(t=>{ if(t.cap>np) t.cap=np; });
+  snapshotP2(); TS=null; saveAll(); refreshStats();
+}
+
+/* ---------- 通用：清單 + 編輯 ---------- */
+function listPane(opts){
+  const {title, items, selId, onSel, onAdd, addLabel, editor, rowHTML} = opts;
+  const cols = el('div'); cols.style.cssText='display:grid;grid-template-columns:270px 1fr;gap:22px;align-items:start';
+  const side = el('div','card');
+  const sh = el('div','card-h',`<h3>${title}</h3>`);
+  const add = el('button','btn','＋ 新增'); add.onclick=onAdd; sh.appendChild(add);
+  side.appendChild(sh);
+  const list = el('div'); list.style.cssText='max-height:560px;overflow-y:auto';
+  items.forEach(it=>{
+    const row = el('button','t-row'+(it.id===selId?' on':'')); row.type='button';
+    row.innerHTML = rowHTML(it);
+    row.onclick=()=>onSel(it.id);
+    list.appendChild(row);
+  });
+  if(!items.length) list.appendChild(el('div','card-b','還沒有任何資料。'));
+  side.appendChild(list);
+  cols.appendChild(side);
+  cols.appendChild(editor());
+  return cols;
+}
+
+/* ---------- 班級 ---------- */
+function classPane(){
+  const ids = Object.keys(D.classes);
+  if(cSel==null || !D.classes[cSel]) cSel = ids[0] || null;
+  return listPane({
+    title:'班級', items: ids.map(id=>({id, ...D.classes[id]})), selId:cSel,
+    onSel:id=>{ cSel=id; renderSetup(); },
+    onAdd:()=>{
+      let n=1; while(D.classes['NEW'+n]) n++;
+      const rid='R_NEW'+n;
+      D.rooms[rid]={name:`新班級 ${n} 教室`, type:'homeroom'};
+      D.classes['NEW'+n]={name:`新班級 ${n}`, grade:1, room:rid, blocked:[]};
+      cSel='NEW'+n; saveAll(); renderSetup();
+    },
+    rowHTML:c=>`<span class="t-name">${c.name}</span>
+      <span class="mono t-num">${D.requirements.filter(r=>r.c===c.id).reduce((n,r)=>n+r.n,0)} 節</span>`,
+    editor:()=>{
+      const card=el('div','card');
+      if(!cSel){ card.appendChild(el('div','card-b','請先新增一個班級。')); return card; }
+      const c=D.classes[cSel];
+      const h=el('div','card-h',`<h3>${c.name}</h3>`);
+      const del=el('button','btn','刪除這個班級');
+      del.onclick=()=>{
+        if(!confirm(`刪除「${c.name}」？它的配課與課表也會一併移除。`)) return;
+        D.requirements = D.requirements.filter(r=>r.c!==cSel);
+        D.placements = D.placements.filter(x=>x.c!==cSel);
+        const home = c.room;
+        delete D.classes[cSel];
+        // 原班教室只服務這一個班，跟著刪掉，免得累積出用不到的空教室
+        const stillUsed = Object.values(D.classes).some(x=>x.room===home)
+          || D.placements.some(x=>x.r===home);
+        if(!stillUsed && D.rooms[home] && D.rooms[home].type==='homeroom') delete D.rooms[home];
+        cSel=null; snapshotP2(); saveAll(); refreshStats(); renderSetup();
+      };
+      h.appendChild(del); card.appendChild(h);
+      const b=el('div','card-b');
+      const gr=el('div','form-grid');
+      const fld=(l,n,hint)=>{ const w=el('div','fld'); w.appendChild(el('label','eyebrow',l));
+        w.appendChild(n); if(hint) w.appendChild(el('div','hint',hint)); return w; };
+
+      const nm=el('input'); nm.className='in'; nm.value=c.name;
+      nm.oninput=()=>{ c.name=nm.value; saveAll(); h.querySelector('h3').textContent=c.name; };
+      gr.appendChild(fld('班級名稱', nm));
+
+      const gd=el('input'); gd.type='number'; gd.min='1'; gd.max='9'; gd.className='in'; gd.value=c.grade;
+      gd.oninput=()=>{ c.grade=+gd.value||1; saveAll(); };
+      gr.appendChild(fld('年級', gd));
+
+      const rm=el('select');
+      Object.entries(D.rooms).filter(([,r])=>r.type==='homeroom').forEach(([id,r])=>{
+        const o=el('option',null,r.name); o.value=id; if(id===c.room)o.selected=true; rm.appendChild(o); });
+      rm.onchange=()=>{
+        const old=c.room; c.room=rm.value;
+        D.placements.forEach(x=>{ if(x.c===cSel && x.r===old) x.r=c.room; });
+        saveAll(); refreshStats(); renderSetup();
+      };
+      gr.appendChild(fld('原班教室', rm, '導師的課都排在這裡'));
+      b.appendChild(gr);
+
+      const tot = D.requirements.filter(r=>r.c===cSel).reduce((n,r)=>n+r.n,0);
+      const cap = D.grid.days*D.grid.periods - c.blocked.length;
+      const bx=el('div'); bx.style.marginTop='18px';
+      bx.appendChild(el('div','eyebrow','不上課的時段'));
+      bx.appendChild(el('div','hint',
+        `低年級常見的是每天不上第 7 節、週三下午不上課。目前可用 ${cap} 節、已配課 ${tot} 節。`));
+      bx.appendChild(slotPicker(c.blocked, s=>{
+        const k=c.blocked.indexOf(s);
+        if(k<0){
+          c.blocked.push(s);
+          D.placements = D.placements.filter(x=>{      // 這格若已有課，得先拿掉
+            if(x.c!==cSel) return true;
+            for(let i=0;i<x.len;i++) if(x.slot+i===s) return false;
+            return true;
+          });
+        } else c.blocked.splice(k,1);
+        c.blocked.sort((a,z)=>a-z);
+        snapshotP2(); saveAll(); refreshStats(); renderSetup();
+      }));
+      b.appendChild(bx);
+      card.appendChild(b); return card;
+    },
+  });
+}
+
+/* 5×7 的時段勾選格 */
+function slotPicker(selected, onTog){
+  const g=D.grid, wrap=el('div','tt-scroll'), box=el('div','sp');
+  box.style.gridTemplateColumns = `44px repeat(${g.days}, minmax(48px,1fr))`;
+  box.appendChild(el('div','sp-h',''));
+  for(let d=1;d<=g.days;d++) box.appendChild(el('div','sp-h','週'+DAYS[d-1]));
+  for(let q=1;q<=g.periods;q++){
+    box.appendChild(el('div','sp-p','第'+q+'節'));
+    for(let d=1;d<=g.days;d++){
+      const s=(d-1)*g.periods+(q-1);
+      const on=selected.includes(s);
+      const btn=el('button','sp-c'+(on?' on':''), on?'休':''); btn.type='button';
+      btn.title = on ? '這節不上課' : '點一下設為不上課';
+      btn.onclick=()=>onTog(s);
+      box.appendChild(btn);
+    }
+  }
+  wrap.appendChild(box); return wrap;
+}
+
+/* ---------- 教室 ---------- */
+function roomPane(){
+  const ids = Object.keys(D.rooms);
+  if(rSel==null || !D.rooms[rSel]) rSel = ids[0] || null;
+  const usage = id => D.placements.filter(x=>x.r===id).reduce((n,x)=>n+x.len,0);
+  return listPane({
+    title:'教室', items: ids.map(id=>({id, ...D.rooms[id]})), selId:rSel,
+    onSel:id=>{ rSel=id; renderSetup(); },
+    onAdd:()=>{ let n=1; while(D.rooms['RM'+n]) n++;
+      D.rooms['RM'+n]={name:'新教室 '+n, type:'other'}; rSel='RM'+n; saveAll(); renderSetup(); },
+    rowHTML:r=>`<span class="t-name">${r.name}</span>
+      <span class="chip">${roomTypeName(r.type)}</span>
+      <span class="mono t-num">${usage(r.id)}</span>`,
+    editor:()=>{
+      const card=el('div','card');
+      if(!rSel){ card.appendChild(el('div','card-b','請先新增一間教室。')); return card; }
+      const r=D.rooms[rSel];
+      const h=el('div','card-h',`<h3>${r.name}</h3>`);
+      const del=el('button','btn','刪除這間教室');
+      del.onclick=()=>{
+        const home = Object.entries(D.classes).filter(([,c])=>c.room===rSel).map(([,c])=>c.name);
+        if(home.length){ alert(`${home.join('、')} 的原班教室是這一間，請先改到別間再刪。`); return; }
+        if(usage(rSel) && !confirm('這間教室目前有課，刪除後那些課要重新排。仍要刪除？')) return;
+        D.placements = D.placements.filter(x=>x.r!==rSel);
+        delete D.rooms[rSel]; rSel=null; snapshotP2(); saveAll(); refreshStats(); renderSetup();
+      };
+      h.appendChild(del); card.appendChild(h);
+      const b=el('div','card-b'); const gr=el('div','form-grid');
+      const fld=(l,n,hint)=>{ const w=el('div','fld'); w.appendChild(el('label','eyebrow',l));
+        w.appendChild(n); if(hint) w.appendChild(el('div','hint',hint)); return w; };
+      const nm=el('input'); nm.className='in'; nm.value=r.name;
+      nm.oninput=()=>{ r.name=nm.value; saveAll(); h.querySelector('h3').textContent=r.name; };
+      gr.appendChild(fld('教室名稱', nm));
+      const ty=el('select');
+      ROOM_TYPES.forEach(([k,t])=>{ const o=el('option',null,t); o.value=k;
+        if(k===r.type)o.selected=true; ty.appendChild(o); });
+      ty.onchange=()=>{ r.type=ty.value; saveAll(); renderSetup(); };
+      gr.appendChild(fld('類型', ty, '科目指定的類型要跟這裡一致，課才排得進來'));
+      b.appendChild(gr);
+
+      const need = {};
+      D.requirements.forEach(q=>{ const rt=D.subjects[q.s].room; if(rt) need[rt]=(need[rt]||0)+q.n; });
+      const same = Object.values(D.rooms).filter(x=>x.type===r.type).length;
+      const info=el('div'); info.style.marginTop='16px';
+      info.innerHTML = `<div class="eyebrow">這個類型的供需</div>
+        <div class="kv"><span>同類型教室</span><b>${same} 間</b></div>
+        <div class="kv"><span>每週可容納</span><b>${same*D.grid.days*D.grid.periods} 節</b></div>
+        <div class="kv"><span>目前需求</span><b>${need[r.type]||0} 節</b></div>`;
+      b.appendChild(info);
+      if((need[r.type]||0) > same*D.grid.days*D.grid.periods){
+        const n=el('div','note bad'); n.style.marginTop='12px';
+        n.textContent='需求超過容量，一定排不出來。請增加教室或減少節數。';
+        b.appendChild(n);
+      }
+      card.appendChild(b); return card;
+    },
+  });
+}
+
+/* ---------- 科目 ---------- */
+function subjectPane(){
+  const ids = Object.keys(D.subjects);
+  if(sSel==null || !D.subjects[sSel]) sSel = ids[0] || null;
+  const used = id => D.requirements.filter(r=>r.s===id).reduce((n,r)=>n+r.n,0);
+  return listPane({
+    title:'科目', items: ids.map(id=>({id, ...D.subjects[id]})), selId:sSel,
+    onSel:id=>{ sSel=id; renderSetup(); },
+    onAdd:()=>{ let n=1; while(D.subjects['SB'+n]) n++;
+      D.subjects['SB'+n]={name:'新科目 '+n, room:null, core:false}; sSel='SB'+n; saveAll(); renderSetup(); },
+    rowHTML:s=>`<span class="t-name">${s.name}</span>
+      ${s.core?'<span class="chip">主科</span>':''}
+      ${s.room?`<span class="chip special">${roomTypeName(s.room)}</span>`:''}
+      <span class="mono t-num">${used(s.id)}</span>`,
+    editor:()=>{
+      const card=el('div','card');
+      if(!sSel){ card.appendChild(el('div','card-b','請先新增一個科目。')); return card; }
+      const sj=D.subjects[sSel];
+      const h=el('div','card-h',`<h3>${sj.name}</h3>`);
+      const del=el('button','btn','刪除這個科目');
+      del.onclick=()=>{
+        if(used(sSel) && !confirm(`有 ${used(sSel)} 節課是這一科，刪除會一併移除。確定？`)) return;
+        D.requirements = D.requirements.filter(r=>r.s!==sSel);
+        D.placements = D.placements.filter(x=>x.s!==sSel);
+        delete D.subjects[sSel]; sSel=null; snapshotP2(); saveAll(); refreshStats(); renderSetup();
+      };
+      h.appendChild(del); card.appendChild(h);
+      const b=el('div','card-b'); const gr=el('div','form-grid');
+      const fld=(l,n,hint)=>{ const w=el('div','fld'); w.appendChild(el('label','eyebrow',l));
+        w.appendChild(n); if(hint) w.appendChild(el('div','hint',hint)); return w; };
+      const nm=el('input'); nm.className='in'; nm.value=sj.name;
+      nm.oninput=()=>{ sj.name=nm.value; saveAll(); h.querySelector('h3').textContent=sj.name; };
+      gr.appendChild(fld('科目名稱', nm));
+      const rt=el('select');
+      const o0=el('option',null,'在原班教室上'); o0.value='';
+      if(!sj.room) o0.selected=true; rt.appendChild(o0);
+      ROOM_TYPES.filter(x=>x[0]!=='homeroom').forEach(([k,t])=>{
+        const o=el('option',null,t); o.value=k; if(k===sj.room)o.selected=true; rt.appendChild(o); });
+      rt.onchange=()=>{
+        sj.room = rt.value || null;
+        D.placements = D.placements.filter(x=>x.s!==sSel);   // 教室型態變了，原本的位置不再合法
+        snapshotP2(); saveAll(); refreshStats(); renderSetup();
+      };
+      gr.appendChild(fld('需要的教室', rt, '改動會清掉這一科已排定的位置，需重新排課'));
+      const core=el('div','seg');
+      [['是','1'],['否','0']].forEach(([lbl,v])=>{
+        const bt=el('button',null,lbl); bt.type='button';
+        bt.setAttribute('aria-pressed', String(!!sj.core)===String(v==='1'));
+        bt.onclick=()=>{ sj.core=(v==='1'); saveAll(); renderSetup(); }; core.appendChild(bt); });
+      gr.appendChild(fld('是否為主科', core, '主科會套用「盡量排上午」的偏好'));
+      b.appendChild(gr);
+      card.appendChild(b); return card;
+    },
+  });
+}
+
+/* ---------- 資料：備份、還原、匯出 ---------- */
+function dataPane(){
+  const card = el('div','card');
+  card.appendChild(el('div','card-h','<h3>資料</h3>'));
+  const b = el('div','card-b');
+
+  const size = (()=>{ try{ return (localStorage.getItem(STORE)||'').length; }catch(e){ return 0; } })();
+  b.appendChild(el('div','note '+(size?'ok':'warn'),
+    size ? `所有設定與課表都存在<b>這台瀏覽器</b>裡（目前 ${(size/1024).toFixed(0)} KB）。`
+         + '換一台電腦或清除瀏覽器資料就會不見 —— 重要的話請下載備份。'
+         : '目前還沒有存檔，改動任何設定後就會自動存下來。'));
+
+  const mk=(title, hint, btns)=>{
+    const box=el('div'); box.style.marginTop='20px';
+    box.appendChild(el('div','eyebrow',title));
+    box.appendChild(el('div','hint',hint));
+    const row=el('div'); row.style.cssText='display:flex;gap:8px;flex-wrap:wrap;margin-top:9px';
+    btns.forEach(x=>row.appendChild(x)); box.appendChild(row); return box;
+  };
+
+  const dl=el('button','btn','下載備份'); dl.onclick=()=>downloadText(schoolJSON(),'school.json','application/json');
+  const cp=el('button','btn','複製 JSON');
+  cp.onclick=()=>copyText(schoolJSON(), cp, '複製 JSON');
+  b.appendChild(mk('備份整份資料',
+    '包含節次、班級、教室、科目、老師、配課、需求與目前的課表。也可以餵給 prototype/ 的 Python 求解器。',
+    [dl, cp]));
+
+  const file=el('input'); file.type='file'; file.accept='.json'; file.style.display='none';
+  file.onchange=e=>{
+    const f=e.target.files[0]; if(!f) return;
+    const rd=new FileReader();
+    rd.onload=()=>{
+      try{
+        const j=JSON.parse(rd.result);
+        const miss=['grid','classes','rooms','subjects','teachers','requirements'].filter(k=>!j[k]);
+        if(miss.length) throw new Error('缺少 '+miss.join('、'));
+        j.placements = j.placements || [];
+        j.constraints = j.constraints || [];
+        localStorage.setItem(STORE, JSON.stringify(j));
+        location.reload();
+      }catch(err){ alert('讀不進來：'+err.message); }
+    };
+    rd.readAsText(f,'utf-8');
+  };
+  const imp=el('button','btn','選擇備份檔'); imp.onclick=()=>file.click();
+  b.appendChild(mk('還原備份', '會覆蓋目前所有資料。', [imp, file]));
+
+  const rst=el('button','btn','回復成範例資料');
+  rst.onclick=()=>{ if(confirm('會清掉這台裝置上的所有設定與課表，確定？')) resetAll(); };
+  b.appendChild(mk('重來', '清除這台瀏覽器的存檔，回到內建的 12 班範例。', [rst]));
+
+  card.appendChild(b); return card;
+}
+
+function schoolJSON(){
+  return JSON.stringify({
+    grid:D.grid, classes:D.classes, rooms:D.rooms, subjects:D.subjects,
+    teachers:D.teachers, requirements:D.requirements,
+    constraints:D.constraints, placements:D.placements,
+  }, null, 2);
+}
+function downloadText(text, name, mime){
+  const a=el('a'); a.href=URL.createObjectURL(new Blob([text],{type:mime}));
+  a.download=name; document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },0);
+}
+async function copyText(text, btn, label){
+  try{ await navigator.clipboard.writeText(text);
+    btn.textContent='已複製 ✓'; setTimeout(()=>{ btn.textContent=label; },1800);
+  }catch(e){
+    const ta=el('textarea'); ta.className='in'; ta.rows=10; ta.value=text; ta.readOnly=true;
+    ta.style.marginTop='10px'; btn.parentElement.parentElement.appendChild(ta); ta.select();
+  }
+}
+
+/* ---------- 課表匯出 ---------- */
+function timetableCSV(){
+  const g=D.grid, rows=[['班級','節次',...DAYS.slice(0,g.days).map(d=>'週'+d)]];
+  Object.entries(D.classes).forEach(([cid,cls])=>{
+    const cell={};
+    D.placements.filter(x=>x.c===cid).forEach(x=>{
+      for(let k=0;k<x.len;k++) cell[x.slot+k] =
+        D.subjects[x.s].name + '（' + (D.teachers[x.t]?D.teachers[x.t].name:'?') + '）';
+    });
+    for(let q=1;q<=g.periods;q++){
+      const line=[cls.name, '第'+q+'節'];
+      for(let d=1;d<=g.days;d++){
+        const s=(d-1)*g.periods+(q-1);
+        line.push(cls.blocked.includes(s) ? '' : (cell[s]||''));
+      }
+      rows.push(line);
+    }
+  });
+  return '﻿' + rows.map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+}
+
+/* 列印用：把所有班級課表畫進隱藏容器，交給瀏覽器的列印功能。
+   不開新視窗，因為嵌入式檢視器會擋彈出視窗。 */
+function buildPrintArea(){
+  const host = document.getElementById('print-area');
+  host.innerHTML = '';
+  const g = D.grid;
+  Object.entries(D.classes).forEach(([cid,cls])=>{
+    const sec = el('section','pr-page');
+    sec.appendChild(el('h2','pr-t', cls.name + ' 課表'));
+    const cell={};
+    D.placements.filter(x=>x.c===cid).forEach(x=>{
+      for(let k=0;k<x.len;k++) cell[x.slot+k]=x;
+    });
+    const t=el('table','pr-tt');
+    t.innerHTML = '<thead><tr><th></th>'
+      + DAYS.slice(0,g.days).map(d=>`<th>週${d}</th>`).join('') + '</tr></thead>';
+    const tb=el('tbody');
+    for(let q=1;q<=g.periods;q++){
+      const tr=el('tr'); let h=`<th>第${q}節</th>`;
+      for(let d=1;d<=g.days;d++){
+        const s=(d-1)*g.periods+(q-1), x=cell[s];
+        h += cls.blocked.includes(s) ? '<td class="pr-x"></td>'
+          : x ? `<td><b>${D.subjects[x.s].name}</b><span>${D.teachers[x.t]?D.teachers[x.t].name:''}</span></td>`
+              : '<td></td>';
+      }
+      tr.innerHTML=h; tb.appendChild(tr);
+    }
+    t.appendChild(tb); sec.appendChild(t); host.appendChild(sec);
+  });
+}
+
 /* ============ 導覽 ============ */
 const STEPS = [
+  ['p-setup','基本設定', renderSetup],
   ['p-teachers','老師設定', renderTeachers],
   ['p-load','配課', renderAssign],
   ['p-phase1','科任／行政排課', renderPhase1],
